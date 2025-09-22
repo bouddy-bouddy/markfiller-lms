@@ -42,7 +42,7 @@ export default function AdminHome() {
     fullName: z.string().min(2),
     email: z.string().email(),
     cin: z.string().min(3),
-    allowedDevices: z.number().min(1).max(5).default(1),
+    allowedDevices: z.number().min(1).max(2).default(1),
   });
   type CreateValues = z.infer<typeof createSchema>;
   const form = useForm<CreateValues>({
@@ -206,7 +206,7 @@ export default function AdminHome() {
                         <Input
                           type="number"
                           min={1}
-                          max={5}
+                          max={2}
                           {...field}
                           onChange={(e) =>
                             field.onChange(Number(e.target.value))

@@ -72,7 +72,7 @@ const LicenseSchema = new Schema<LicenseDocument>(
       index: true,
     },
     key: { type: String, required: true, unique: true, index: true },
-    allowedDevices: { type: Number, default: 1, min: 1, max: 5 },
+    allowedDevices: { type: Number, default: 1, min: 1, max: 2 },
     validUntil: { type: Date, required: true },
     status: {
       type: String,
