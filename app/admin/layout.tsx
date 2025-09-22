@@ -1,5 +1,3 @@
-import { ThemeToggle } from "@/components/theme-toggle";
-
 export default function AdminLayout({
   children,
 }: {
@@ -13,7 +11,6 @@ export default function AdminLayout({
           <div className="flex items-center gap-3 text-sm opacity-80">
             <a href="/admin">Licenses</a>
             <a href="/admin/analytics">Analytics</a>
-            <ThemeToggle />
           </div>
         </div>
       </header>
