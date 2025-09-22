@@ -22,6 +22,7 @@ export default function Home() {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
@@ -40,6 +41,7 @@ export default function Home() {
     if (!token) return;
     const res = await fetch("/api/licenses", {
       headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
     });
     const data = await res.json();
     if (res.ok) setLicenses(data);
@@ -56,6 +58,7 @@ export default function Home() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
+      credentials: "include",
       body: JSON.stringify({ fullName, email: teacherEmail }),
     });
     if (res.ok) await loadLicenses();
@@ -69,6 +72,7 @@ export default function Home() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
+      credentials: "include",
       body: JSON.stringify({ key, status }),
     });
     if (res.ok) await loadLicenses();
@@ -80,6 +84,7 @@ export default function Home() {
     const res = await fetch(`/api/licenses?key=${encodeURIComponent(key)}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
     });
     if (res.ok) await loadLicenses();
   }

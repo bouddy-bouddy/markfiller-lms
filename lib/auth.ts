@@ -6,6 +6,8 @@ if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is not set in environment variables");
 }
 
+export const ADMIN_TOKEN_COOKIE = "admin_token";
+
 export type JwtPayload = {
   sub: string;
   email: string;

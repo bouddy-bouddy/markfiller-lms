@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectToDatabase } from "@/lib/db";
 import { AdminUser } from "@/lib/models";
-import { signAdminJwt } from "@/lib/auth";
+import { ADMIN_TOKEN_COOKIE, signAdminJwt } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   await connectToDatabase();
@@ -30,5 +30,14 @@ export async function POST(req: NextRequest) {
     email: admin.email,
     role: "admin",
   });
-  return NextResponse.json({ token });
+  const res = NextResponse.json({ token });
+  const isProd = process.env.NODE_ENV === "production";
+  res.cookies.set(ADMIN_TOKEN_COOKIE, token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 12, // 12h
+  });
+  return res;
 }

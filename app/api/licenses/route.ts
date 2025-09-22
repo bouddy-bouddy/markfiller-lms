@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Activation, EventLog, License, Teacher } from "@/lib/models";
-import { getAuthHeaderToken, verifyJwt } from "@/lib/auth";
+import { ADMIN_TOKEN_COOKIE, getAuthHeaderToken, verifyJwt } from "@/lib/auth";
 import { nanoid } from "nanoid";
 import { addMonths } from "date-fns";
 import { licenseEmailTemplate, sendMail } from "@/lib/email";
 
 async function requireAdmin(req: NextRequest) {
-  const token = getAuthHeaderToken(req.headers.get("authorization"));
+  const tokenFromHeader = getAuthHeaderToken(req.headers.get("authorization"));
+  const tokenFromCookie = req.cookies.get(ADMIN_TOKEN_COOKIE)?.value || null;
+  const token = tokenFromHeader || tokenFromCookie;
   if (!token) throw new Error("Unauthorized");
   const payload = verifyJwt(token);
   if (payload.role !== "admin") throw new Error("Forbidden");
