@@ -1,6 +1,12 @@
 "use client";
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -46,7 +52,12 @@ export default function Home() {
     <div className="min-h-dvh flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,theme(colors.slate.100),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,theme(colors.slate.900),transparent_60%)]">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>MarkFiller License Manager</CardTitle>
+          <CardTitle className="text-center text-xl">
+            MarkFiller License Manager
+          </CardTitle>
+          <p className="text-center text-sm text-muted-foreground">
+            Enter your credentials to access the admin dashboard
+          </p>
         </CardHeader>
         <CardContent className="space-y-3">
           <Input
@@ -64,6 +75,12 @@ export default function Home() {
             {loading ? "Signing in..." : "Sign in"}
           </Button>
         </CardContent>
+
+        <CardFooter>
+          <p className="text-center text-sm  w-full text-muted-foreground">
+            VoxMark Admin Portal - Restricted Access
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );
