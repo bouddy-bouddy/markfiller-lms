@@ -41,12 +41,13 @@ export default function AdminHome() {
   const createSchema = z.object({
     fullName: z.string().min(2),
     email: z.string().email(),
+    cin: z.string().min(3),
     allowedDevices: z.number().min(1).max(5).default(1),
   });
   type CreateValues = z.infer<typeof createSchema>;
   const form = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
-    defaultValues: { fullName: "", email: "", allowedDevices: 1 },
+    defaultValues: { fullName: "", email: "", cin: "", allowedDevices: 1 },
   });
 
   async function loadLicenses() {
@@ -131,7 +132,7 @@ export default function AdminHome() {
             <div className="font-medium mb-3">Create License</div>
             <Form {...form}>
               <form
-                className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+                className="grid grid-cols-1 sm:grid-cols-4 gap-3"
                 onSubmit={form.handleSubmit(async (values) => {
                   try {
                     const res = await fetch("/api/licenses", {
@@ -144,7 +145,12 @@ export default function AdminHome() {
                     toast.success(
                       "License created and email sent (if SMTP configured)"
                     );
-                    form.reset({ fullName: "", email: "", allowedDevices: 1 });
+                    form.reset({
+                      fullName: "",
+                      email: "",
+                      cin: "",
+                      allowedDevices: 1,
+                    });
                     loadLicenses();
                   } catch (e: any) {
                     toast.error(e.message || "Error creating license");
@@ -179,6 +185,19 @@ export default function AdminHome() {
                 />
                 <FormField
                   control={form.control}
+                  name="cin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CIN</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ID Card Number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="allowedDevices"
                   render={({ field }) => (
                     <FormItem>
@@ -198,7 +217,7 @@ export default function AdminHome() {
                     </FormItem>
                   )}
                 />
-                <div className="sm:col-span-3">
+                <div className="sm:col-span-4">
                   <Button type="submit">Create</Button>
                 </div>
               </form>
@@ -237,10 +256,10 @@ export default function AdminHome() {
                       <Badge
                         variant={
                           lic.status === "active"
-                            ? "success"
+                            ? "secondary"
                             : lic.status === "suspended"
-                            ? "warning"
-                            : "secondary"
+                            ? "destructive"
+                            : "outline"
                         }
                       >
                         {lic.status}

@@ -52,18 +52,20 @@ export async function POST(req: NextRequest) {
   const {
     fullName,
     email,
+    cin,
     allowedDevices = 1,
     monthsValid = 10,
   }: {
     fullName: string;
     email: string;
+    cin: string;
     allowedDevices?: number;
     monthsValid?: number;
   } = body;
 
-  if (!fullName || !email) {
+  if (!fullName || !email || !cin) {
     return NextResponse.json(
-      { error: "fullName and email are required" },
+      { error: "fullName, email and cin are required" },
       { status: 400 }
     );
   }
@@ -73,7 +75,7 @@ export async function POST(req: NextRequest) {
 
   const teacher = await Teacher.findOneAndUpdate(
     { email: String(email).toLowerCase() },
-    { fullName, email: String(email).toLowerCase() },
+    { fullName, email: String(email).toLowerCase(), cin },
     { upsert: true, new: true }
   );
 
