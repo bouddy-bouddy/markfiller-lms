@@ -26,11 +26,19 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url);
   const q = url.searchParams.get("q");
-  const filter: Record<string, unknown> = {};
+  const filter: Record<string, any> = {};
   if (q) {
+    const regex = { $regex: q, $options: "i" } as const;
+    // Try to find matching teachers by CIN, email, or name
+    const teachers = await Teacher.find({
+      $or: [{ cin: regex }, { email: regex }, { fullName: regex }],
+    }).select("_id");
+    const teacherIds = teachers.map((t) => t._id);
+
     filter.$or = [
-      { key: { $regex: q, $options: "i" } },
-      { status: { $regex: q, $options: "i" } },
+      { key: regex },
+      { status: regex },
+      ...(teacherIds.length ? [{ teacher: { $in: teacherIds } }] : []),
     ];
   }
   const licenses = await License.find(filter)
