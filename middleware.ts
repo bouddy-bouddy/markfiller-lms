@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { ADMIN_TOKEN_COOKIE, verifyJwt } from "@/lib/auth";
+import { ADMIN_TOKEN_COOKIE } from "@/lib/auth";
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -15,15 +15,9 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  try {
-    const payload = verifyJwt(token);
-    if (payload.role !== "admin") throw new Error("forbidden");
-    return NextResponse.next();
-  } catch {
-    const url = req.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
-  }
+  // In middleware (Edge runtime), avoid heavy JWT verification.
+  // Presence of cookie is enough; API routes will verify JWT server-side.
+  return NextResponse.next();
 }
 
 export const config = {

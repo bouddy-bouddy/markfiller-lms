@@ -3,6 +3,19 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -25,6 +38,16 @@ export default function AdminHome() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [loading, setLoading] = useState(false);
+  const createSchema = z.object({
+    fullName: z.string().min(2),
+    email: z.string().email(),
+    allowedDevices: z.number().min(1).max(5).default(1),
+  });
+  type CreateValues = z.infer<typeof createSchema>;
+  const form = useForm<CreateValues>({
+    resolver: zodResolver(createSchema),
+    defaultValues: { fullName: "", email: "", allowedDevices: 1 },
+  });
 
   async function loadLicenses() {
     setLoading(true);
@@ -104,6 +127,83 @@ export default function AdminHome() {
           <CardTitle>Licenses</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="border rounded p-4">
+            <div className="font-medium mb-3">Create License</div>
+            <Form {...form}>
+              <form
+                className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+                onSubmit={form.handleSubmit(async (values) => {
+                  try {
+                    const res = await fetch("/api/licenses", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify(values),
+                    });
+                    if (!res.ok) throw new Error("Failed to create");
+                    toast.success(
+                      "License created and email sent (if SMTP configured)"
+                    );
+                    form.reset({ fullName: "", email: "", allowedDevices: 1 });
+                    loadLicenses();
+                  } catch (e: any) {
+                    toast.error(e.message || "Error creating license");
+                  }
+                })}
+              >
+                <FormField
+                  control={form.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Teacher name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="teacher@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="allowedDevices"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Allowed devices</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={5}
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="sm:col-span-3">
+                  <Button type="submit">Create</Button>
+                </div>
+              </form>
+            </Form>
+          </div>
           <div className="flex flex-wrap gap-2 items-center">
             <Input
               placeholder="Search by key/status/email..."
@@ -134,17 +234,17 @@ export default function AdminHome() {
                   <div>
                     <div className="font-medium flex items-center gap-2">
                       <span>{lic.key}</span>
-                      <span
-                        className={`px-2 py-0.5 rounded text-xs ${
+                      <Badge
+                        variant={
                           lic.status === "active"
-                            ? "bg-green-100 text-green-800"
+                            ? "success"
                             : lic.status === "suspended"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-200 text-gray-800"
-                        }`}
+                            ? "warning"
+                            : "secondary"
+                        }
                       >
                         {lic.status}
-                      </span>
+                      </Badge>
                     </div>
                     <div className="text-sm opacity-70">
                       {lic.teacher?.fullName} — {lic.teacher?.email}
