@@ -38,6 +38,7 @@ export default function AdminHome() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
   const createSchema = z.object({
     fullName: z.string().min(2),
     email: z.string().email(),
@@ -134,6 +135,7 @@ export default function AdminHome() {
               <form
                 className="grid grid-cols-1 sm:grid-cols-4 gap-3"
                 onSubmit={form.handleSubmit(async (values) => {
+                  setCreating(true);
                   try {
                     const res = await fetch("/api/licenses", {
                       method: "POST",
@@ -142,9 +144,7 @@ export default function AdminHome() {
                       body: JSON.stringify(values),
                     });
                     if (!res.ok) throw new Error("Failed to create");
-                    toast.success(
-                      "License created and email sent (if SMTP configured)"
-                    );
+                    toast.success("License created and email sent");
                     form.reset({
                       fullName: "",
                       email: "",
@@ -154,6 +154,8 @@ export default function AdminHome() {
                     loadLicenses();
                   } catch (e: any) {
                     toast.error(e.message || "Error creating license");
+                  } finally {
+                    setCreating(false);
                   }
                 })}
               >
@@ -218,7 +220,9 @@ export default function AdminHome() {
                   )}
                 />
                 <div className="sm:col-span-4">
-                  <Button type="submit">Create</Button>
+                  <Button type="submit" disabled={creating}>
+                    {creating ? "Creating..." : "Create"}
+                  </Button>
                 </div>
               </form>
             </Form>

@@ -46,7 +46,7 @@ export default function Home() {
     <div className="min-h-dvh flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,theme(colors.slate.100),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,theme(colors.slate.900),transparent_60%)]">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Admin Login</CardTitle>
+          <CardTitle>MarkFiller License Manager</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <Input
