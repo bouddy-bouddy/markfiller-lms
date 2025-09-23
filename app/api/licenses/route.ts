@@ -5,6 +5,8 @@ import { ADMIN_TOKEN_COOKIE, getAuthHeaderToken, verifyJwt } from "@/lib/auth";
 import { nanoid } from "nanoid";
 import { addMonths } from "date-fns";
 import { licenseEmailTemplate, sendMail } from "@/lib/email";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 async function requireAdmin(req: NextRequest) {
   const tokenFromHeader = getAuthHeaderToken(req.headers.get("authorization"));
@@ -81,8 +83,22 @@ export async function POST(req: NextRequest) {
   const key = `MF-${nanoid(6)}-${nanoid(6)}`.toUpperCase();
   const validUntil = addMonths(new Date(), monthsValid);
 
+  // Ensure unique CIN: if another teacher already has this CIN with different email, reject
+  const existingByCin = cin ? await Teacher.findOne({ cin }) : null;
+  if (
+    existingByCin &&
+    String(existingByCin.email).toLowerCase() !== String(email).toLowerCase()
+  ) {
+    return NextResponse.json(
+      { error: "CIN already in use by another teacher" },
+      { status: 409 }
+    );
+  }
+
   const teacher = await Teacher.findOneAndUpdate(
-    { email: String(email).toLowerCase() },
+    {
+      $or: [{ email: String(email).toLowerCase() }, ...(cin ? [{ cin }] : [])],
+    },
     { fullName, email: String(email).toLowerCase(), cin },
     { upsert: true, new: true }
   );

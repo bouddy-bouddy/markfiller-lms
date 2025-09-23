@@ -2,14 +2,17 @@ import mongoose, { Schema, models, model, type Model } from "mongoose";
 
 export type AdminUserDocument = {
   _id: mongoose.Types.ObjectId;
+  fullName?: string;
   email: string;
   passwordHash: string;
+  role: "admin" | "support";
   createdAt: Date;
   updatedAt: Date;
 };
 
 const AdminUserSchema = new Schema<AdminUserDocument>(
   {
+    fullName: { type: String },
     email: {
       type: String,
       required: true,
@@ -18,6 +21,12 @@ const AdminUserSchema = new Schema<AdminUserDocument>(
       index: true,
     },
     passwordHash: { type: String, required: true },
+    role: {
+      type: String,
+      enum: ["admin", "support"],
+      default: "admin",
+      index: true,
+    },
   },
   { timestamps: true }
 );
@@ -40,7 +49,7 @@ const TeacherSchema = new Schema<TeacherDocument>(
   {
     fullName: { type: String, required: true },
     email: { type: String, required: true, lowercase: true, index: true },
-    cin: { type: String },
+    cin: { type: String, unique: true, sparse: true, index: true },
     phone: { type: String },
     level: { type: String, enum: ["الإعدادي", "الثانوي"], required: false },
     subject: { type: String },
@@ -160,3 +169,22 @@ export const Activation: Model<ActivationDocument> =
 export const EventLog: Model<EventLogDocument> =
   (models.EventLog as Model<EventLogDocument>) ||
   model("EventLog", EventLogSchema);
+
+export type SettingDocument = {
+  _id: mongoose.Types.ObjectId;
+  key: string;
+  value: any;
+  updatedAt: Date;
+};
+
+const SettingSchema = new Schema<SettingDocument>(
+  {
+    key: { type: String, required: true, unique: true, index: true },
+    value: Schema.Types.Mixed,
+    updatedAt: { type: Date, default: Date.now },
+  },
+  { timestamps: false }
+);
+
+export const Setting: Model<SettingDocument> =
+  (models.Setting as Model<SettingDocument>) || model("Setting", SettingSchema);

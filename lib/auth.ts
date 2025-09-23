@@ -11,7 +11,7 @@ export const ADMIN_TOKEN_COOKIE = "admin_token";
 export type JwtPayload = {
   sub: string;
   email: string;
-  role: "admin";
+  role: "admin" | "support";
 };
 
 export function signAdminJwt(payload: JwtPayload, expiresIn: string = "12h") {

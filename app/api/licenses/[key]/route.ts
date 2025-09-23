@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Activation, EventLog, License, Teacher } from "@/lib/models";
 import { ADMIN_TOKEN_COOKIE, getAuthHeaderToken, verifyJwt } from "@/lib/auth";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 async function requireAdmin(req: NextRequest) {
   const tokenFromHeader = getAuthHeaderToken(req.headers.get("authorization"));

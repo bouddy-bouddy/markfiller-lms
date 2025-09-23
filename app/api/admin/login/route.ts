@@ -25,10 +25,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
+  // Backfill missing role for existing records
+  const role = (admin as any).role || "admin";
+  if (!(admin as any).role) {
+    (admin as any).role = role;
+    try {
+      await (admin as any).save();
+    } catch {}
+  }
+
   const token = signAdminJwt({
     sub: String(admin._id),
     email: admin.email,
-    role: "admin",
+    role: role as any,
   });
   const res = NextResponse.json({ token });
   const isProd = process.env.NODE_ENV === "production";
