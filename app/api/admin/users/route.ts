@@ -72,10 +72,20 @@ export async function POST(req: NextRequest) {
     passwordHash,
     role: role || "admin",
   });
+  // Backfill defaults if the model was previously compiled without fields
+  if (!(user as any).role || typeof (user as any).role !== "string") {
+    (user as any).role = "admin";
+  }
+  if (typeof (user as any).fullName !== "string") {
+    (user as any).fullName = fullName || "";
+  }
+  try {
+    await (user as any).save();
+  } catch {}
   return NextResponse.json(
     {
       _id: user._id,
-      fullName: user.fullName || "",
+      fullName: (user as any).fullName || "",
       email: user.email,
       role: (user as any).role || "admin",
       createdAt: user.createdAt,

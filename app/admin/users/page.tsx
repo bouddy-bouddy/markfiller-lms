@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -50,18 +51,18 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="text-2xl font-semibold">User Management</div>
       <Card>
-        <CardHeader className="w-full flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>All Users</CardTitle>
           <Button onClick={() => setShowCreate(true)}>New User</Button>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="flex gap-2 items-center">
             <Input
               placeholder="Search by name or email..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && load()}
-              className="max-w-md"
+              className="w-full"
             />
             <Button onClick={load} disabled={loading}>
               {loading ? "Loading..." : "Search"}
@@ -236,10 +237,32 @@ function EditUserButton({
   onChanged: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  async function remove() {
+    if (!confirm("Delete this user?")) return;
+    const res = await fetch(`/api/admin/users?id=${user._id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (res.ok) onChanged();
+  }
+
   return (
-    <>
-      <Button size="sm" onClick={() => setOpen(true)}>
-        Edit
+    <div className="flex items-center gap-2">
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => setOpen(true)}
+        aria-label="Edit user"
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="destructive"
+        onClick={remove}
+        aria-label="Delete user"
+      >
+        <Trash2 className="h-4 w-4" />
       </Button>
       {open && (
         <EditUserModal
@@ -251,7 +274,7 @@ function EditUserButton({
           }}
         />
       )}
-    </>
+    </div>
   );
 }
 
@@ -371,9 +394,6 @@ function EditUserModal({
           </Button>
           <Button onClick={save} disabled={saving}>
             {saving ? "Saving..." : "Save"}
-          </Button>
-          <Button variant="destructive" onClick={remove} disabled={saving}>
-            Delete
           </Button>
         </div>
       </div>
