@@ -96,16 +96,30 @@ export async function PATCH(req: NextRequest) {
     fullName,
     password,
     role,
+    email,
   }: {
     id: string;
     fullName?: string;
     password?: string;
     role?: "admin" | "support";
+    email?: string;
   } = await req.json();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
   const update: Record<string, any> = {};
   if (typeof fullName === "string") update.fullName = fullName;
   if (role) update.role = role;
+  if (email) {
+    const exists = await AdminUser.findOne({
+      email: String(email).toLowerCase(),
+      _id: { $ne: id },
+    });
+    if (exists)
+      return NextResponse.json(
+        { error: "Email already in use" },
+        { status: 409 }
+      );
+    update.email = String(email).toLowerCase();
+  }
   if (password) update.passwordHash = await bcrypt.hash(password, 10);
   const user = await AdminUser.findByIdAndUpdate(id, update, {
     new: true,

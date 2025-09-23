@@ -87,7 +87,7 @@ export default function UsersPage() {
                       {new Date(u.createdAt).toLocaleDateString()}
                     </td>
                     <td className="py-2">
-                      <UserRowActions user={u} onChanged={load} />
+                      <EditUserButton user={u} onChanged={load} />
                     </td>
                   </tr>
                 ))}
@@ -162,6 +162,18 @@ function CreateUserDialog({
           Create New User
         </div>
         <div className="p-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="rounded border p-3">
+              <div className="text-xs opacity-70">Name</div>
+              <div className="text-sm font-medium truncate">
+                {fullName || "—"}
+              </div>
+            </div>
+            <div className="rounded border p-3">
+              <div className="text-xs opacity-70">Role</div>
+              <div className="text-sm font-medium capitalize">{role}</div>
+            </div>
+          </div>
           <div>
             <div className="text-sm mb-1">Full Name</div>
             <Input
@@ -213,16 +225,74 @@ function CreateUserDialog({
   );
 }
 
-function UserRowActions({
+function EditUserButton({
   user,
   onChanged,
 }: {
   user: AdminUser;
   onChanged: () => void;
 }) {
-  const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}>
+        Edit
+      </Button>
+      {open && (
+        <EditUserModal
+          user={user}
+          onClose={() => setOpen(false)}
+          onSaved={() => {
+            setOpen(false);
+            onChanged();
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+function EditUserModal({
+  user,
+  onClose,
+  onSaved,
+}: {
+  user: AdminUser;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [fullName, setFullName] = useState(user.fullName || "");
+  const [email, setEmail] = useState(user.email);
   const [role, setRole] = useState<"admin" | "support">(user.role);
   const [password, setPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          id: user._id,
+          fullName,
+          role,
+          email,
+          password: password || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({} as any));
+        throw new Error(e.error || "Failed to save user");
+      }
+      onSaved();
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function remove() {
     if (!confirm("Delete this user?")) return;
@@ -232,63 +302,76 @@ function UserRowActions({
         method: "DELETE",
         credentials: "include",
       });
-      if (res.ok) onChanged();
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function saveChanges() {
-    setSaving(true);
-    try {
-      const res = await fetch("/api/admin/users", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          id: user._id,
-          role,
-          password: password || undefined,
-        }),
-      });
-      if (res.ok) {
-        setPassword("");
-        onChanged();
-      }
+      if (!res.ok) throw new Error("Delete failed");
+      onSaved();
+    } catch (e) {
+      alert((e as Error).message);
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="flex flex-wrap gap-2 items-center">
-      <Select value={role} onValueChange={(v) => setRole(v as any)}>
-        <SelectTrigger className="w-36 h-8 text-xs">
-          <SelectValue placeholder="Role" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="admin">Administrator</SelectItem>
-          <SelectItem value="support">Support</SelectItem>
-        </SelectContent>
-      </Select>
-      <Input
-        type="password"
-        placeholder="New password"
-        className="h-8 text-xs w-40"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <Button size="sm" onClick={saveChanges} disabled={saving}>
-        Save
-      </Button>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={remove}
-        disabled={saving}
+    <div
+      className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-background rounded-lg w-full max-w-lg shadow-xl"
+        onClick={(e) => e.stopPropagation()}
       >
-        Delete
-      </Button>
+        <div className="p-4 border-b text-lg font-semibold">Edit User</div>
+        <div className="p-4 space-y-3">
+          <div>
+            <div className="text-sm mb-1">Full Name</div>
+            <Input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Full name"
+            />
+          </div>
+          <div>
+            <div className="text-sm mb-1">Email</div>
+            <Input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email address"
+            />
+          </div>
+          <div>
+            <div className="text-sm mb-1">Password</div>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="New password (optional)"
+            />
+          </div>
+          <div>
+            <div className="text-sm mb-1">Role</div>
+            <Select value={role} onValueChange={(v) => setRole(v as any)}>
+              <SelectTrigger className="w-56">
+                <SelectValue placeholder="Role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Administrator</SelectItem>
+                <SelectItem value="support">Support</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="p-4 border-t flex items-center justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={save} disabled={saving}>
+            {saving ? "Saving..." : "Save"}
+          </Button>
+          <Button variant="destructive" onClick={remove} disabled={saving}>
+            Delete
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
