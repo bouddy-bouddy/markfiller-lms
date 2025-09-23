@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 type AdminUser = {
   _id: string;
@@ -70,8 +72,8 @@ export default function UsersPage() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left opacity-70">
-                <tr>
+              <thead className="sticky top-0 bg-background z-10">
+                <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="py-2">Name</th>
                   <th className="py-2">Email</th>
                   <th className="py-2">Role</th>
@@ -81,10 +83,18 @@ export default function UsersPage() {
               </thead>
               <tbody>
                 {users.map((u) => (
-                  <tr key={u._id} className="border-t">
-                    <td className="py-2">{u?.fullName || "—"}</td>
+                  <tr key={u._id} className="border-t hover:bg-muted/40">
+                    <td className="py-2">{u.fullName || "—"}</td>
                     <td className="py-2">{u.email}</td>
-                    <td className="py-2 capitalize">{u.role}</td>
+                    <td className="py-2">
+                      <Badge
+                        variant={
+                          u.role === "admin" ? "destructive" : "secondary"
+                        }
+                      >
+                        {u.role}
+                      </Badge>
+                    </td>
                     <td className="py-2">
                       {new Date(u.createdAt).toLocaleDateString()}
                     </td>
@@ -95,7 +105,7 @@ export default function UsersPage() {
                 ))}
                 {!users.length && (
                   <tr>
-                    <td className="py-3 opacity-70" colSpan={5}>
+                    <td className="py-6 text-center opacity-70" colSpan={5}>
                       No users.
                     </td>
                   </tr>
@@ -144,10 +154,11 @@ function CreateUserDialog({
           .catch(() => ({ error: undefined }));
         throw new Error(e.error || "Failed to create user");
       }
+      toast.success("User created");
       onCreated();
       onClose();
     } catch (e) {
-      alert((e as Error).message);
+      toast.error((e as Error).message);
     } finally {
       setSaving(false);
     }
@@ -314,9 +325,10 @@ function EditUserModal({
           .catch(() => ({ error: undefined }));
         throw new Error(e.error || "Failed to save user");
       }
+      toast.success("User updated");
       onSaved();
     } catch (e) {
-      alert((e as Error).message);
+      toast.error((e as Error).message);
     } finally {
       setSaving(false);
     }
@@ -331,9 +343,10 @@ function EditUserModal({
         credentials: "include",
       });
       if (!res.ok) throw new Error("Delete failed");
+      toast.success("User deleted");
       onSaved();
     } catch (e) {
-      alert((e as Error).message);
+      toast.error((e as Error).message);
     } finally {
       setSaving(false);
     }

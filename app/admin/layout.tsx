@@ -1,6 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
+import { GraduationCap } from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -64,23 +65,7 @@ export default function AdminLayout({
     {
       label: "Teachers",
       href: "/admin/teachers",
-      icon: (
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-          className="opacity-80"
-        >
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      ),
+      icon: <GraduationCap className="opacity-80" size={18} />,
     },
     {
       label: "Users",
