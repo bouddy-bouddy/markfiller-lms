@@ -91,6 +91,8 @@ export type ActivationDocument = {
   userAgent?: string;
   ip?: string;
   activatedAt: Date;
+  lastSeenAt?: Date;
+  lastIp?: string;
 };
 
 const ActivationSchema = new Schema<ActivationDocument>(
@@ -105,6 +107,8 @@ const ActivationSchema = new Schema<ActivationDocument>(
     userAgent: { type: String },
     ip: { type: String },
     activatedAt: { type: Date, default: Date.now },
+    lastSeenAt: { type: Date },
+    lastIp: { type: String },
   },
   { timestamps: false }
 );

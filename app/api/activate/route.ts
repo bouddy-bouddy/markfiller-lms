@@ -40,6 +40,11 @@ export async function POST(req: NextRequest) {
   // If device already activated, return OK
   const already = existingActivations.find((a) => a.deviceId === deviceId);
   if (already) {
+    // Touch last seen metadata
+    await Activation.updateOne(
+      { _id: (already as any)._id },
+      { $set: { lastSeenAt: new Date(), lastIp: ip || already.ip } }
+    );
     await EventLog.create({
       license: license._id,
       type: "validation.ok",
@@ -82,7 +87,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  await Activation.create({ license: license._id, deviceId, userAgent, ip });
+  await Activation.create({
+    license: license._id,
+    deviceId,
+    userAgent,
+    ip,
+    lastSeenAt: new Date(),
+    lastIp: ip,
+  });
   await EventLog.create({
     license: license._id,
     type: "activation.created",

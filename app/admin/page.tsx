@@ -256,7 +256,12 @@ export default function AdminHome() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium flex items-center gap-2">
-                      <span>{lic.key}</span>
+                      <a
+                        className="underline"
+                        href={`/admin/licenses/${encodeURIComponent(lic.key)}`}
+                      >
+                        {lic.key}
+                      </a>
                       <Badge
                         variant={
                           lic.status === "active"

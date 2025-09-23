@@ -4,7 +4,7 @@ import { Activation, EventLog, License } from "@/lib/models";
 
 export async function POST(req: NextRequest) {
   await connectToDatabase();
-  const { key, deviceId } = await req.json();
+  const { key, deviceId, ip, userAgent } = await req.json();
   if (!key || !deviceId)
     return NextResponse.json(
       { error: "key and deviceId required" },
@@ -48,6 +48,18 @@ export async function POST(req: NextRequest) {
       { status: 403 }
     );
   }
+
+  // Update last seen on successful validation
+  await Activation.updateOne(
+    { _id: (activation as any)._id },
+    {
+      $set: {
+        lastSeenAt: new Date(),
+        lastIp: ip || activation.ip,
+        userAgent: userAgent || activation.userAgent,
+      },
+    }
+  );
 
   await EventLog.create({
     license: license._id,
