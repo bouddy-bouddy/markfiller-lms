@@ -53,9 +53,7 @@ export default function TeachersPage() {
               onKeyDown={(e) => e.key === "Enter" && load()}
               className="max-w-md"
             />
-            <Button onClick={load} disabled={loading}>
-              {loading ? "Loading..." : "Search"}
-            </Button>
+            <Button onClick={load}>Search</Button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -83,7 +81,7 @@ export default function TeachersPage() {
                 {!rows.length && (
                   <tr>
                     <td className="py-3 opacity-70" colSpan={5}>
-                      No teachers.
+                      {loading ? "Loading..." : "No teachers."}
                     </td>
                   </tr>
                 )}

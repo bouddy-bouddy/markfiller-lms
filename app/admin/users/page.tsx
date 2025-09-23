@@ -66,9 +66,7 @@ export default function UsersPage() {
               onKeyDown={(e) => e.key === "Enter" && load()}
               className="w-full"
             />
-            <Button onClick={load} disabled={loading}>
-              {loading ? "Loading..." : "Search"}
-            </Button>
+            <Button onClick={load}>Search</Button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -106,7 +104,7 @@ export default function UsersPage() {
                 {!users.length && (
                   <tr>
                     <td className="py-6 text-center opacity-70" colSpan={5}>
-                      No users.
+                      {loading ? "Loading..." : "No users."}
                     </td>
                   </tr>
                 )}

@@ -233,11 +233,9 @@ export default function AdminHome() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && loadLicenses()}
-              className="w-64"
+              className="max-w-md"
             />
-            <Button onClick={loadLicenses} disabled={loading}>
-              {loading ? "Loading..." : "Search"}
-            </Button>
+            <Button onClick={loadLicenses}>Search</Button>
             <Select value={status} onValueChange={(v) => setStatus(v)}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Status" />
@@ -251,59 +249,65 @@ export default function AdminHome() {
             </Select>
           </div>
           <div className="space-y-2">
-            {filtered.map((lic) => (
-              <div key={lic._id} className="border rounded p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium flex items-center gap-2">
-                      <a
-                        className="underline"
-                        href={`/admin/licenses/${encodeURIComponent(lic.key)}`}
-                      >
-                        {lic.key}
-                      </a>
-                      <Badge
-                        variant={
-                          lic.status === "active"
-                            ? "secondary"
-                            : lic.status === "suspended"
-                            ? "destructive"
-                            : "outline"
-                        }
-                      >
-                        {lic.status}
-                      </Badge>
+            {loading && (
+              <p className="text-sm opacity-70">Loading licenses...</p>
+            )}
+            {!loading &&
+              filtered.map((lic) => (
+                <div key={lic._id} className="border rounded p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium flex items-center gap-2">
+                        <a
+                          className="underline"
+                          href={`/admin/licenses/${encodeURIComponent(
+                            lic.key
+                          )}`}
+                        >
+                          {lic.key}
+                        </a>
+                        <Badge
+                          variant={
+                            lic.status === "active"
+                              ? "secondary"
+                              : lic.status === "suspended"
+                              ? "destructive"
+                              : "outline"
+                          }
+                        >
+                          {lic.status}
+                        </Badge>
+                      </div>
+                      <div className="text-sm opacity-70">
+                        {lic.teacher?.fullName} — {lic.teacher?.email}
+                      </div>
                     </div>
-                    <div className="text-sm opacity-70">
-                      {lic.teacher?.fullName} — {lic.teacher?.email}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {lic.status === "active" ? (
+                    <div className="flex gap-2">
+                      {lic.status === "active" ? (
+                        <Button
+                          variant="secondary"
+                          onClick={() => mutate(lic.key, "suspended")}
+                        >
+                          Suspend
+                        </Button>
+                      ) : (
+                        <Button onClick={() => mutate(lic.key, "active")}>
+                          Activate
+                        </Button>
+                      )}
                       <Button
-                        variant="secondary"
-                        onClick={() => mutate(lic.key, "suspended")}
+                        variant="destructive"
+                        onClick={() => remove(lic.key)}
                       >
-                        Suspend
+                        Delete
                       </Button>
-                    ) : (
-                      <Button onClick={() => mutate(lic.key, "active")}>
-                        Activate
-                      </Button>
-                    )}
-                    <Button
-                      variant="destructive"
-                      onClick={() => remove(lic.key)}
-                    >
-                      Delete
-                    </Button>
+                    </div>
+                  </div>
+                  <div className="text-xs opacity-70 mt-2">
+                    valid until {new Date(lic.validUntil).toLocaleDateString()}
                   </div>
                 </div>
-                <div className="text-xs opacity-70 mt-2">
-                  valid until {new Date(lic.validUntil).toLocaleDateString()}
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </CardContent>
       </Card>
