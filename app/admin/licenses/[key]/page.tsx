@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -32,12 +32,13 @@ type License = {
 export default function LicenseDetails({
   params,
 }: {
-  params: { key: string };
+  params: Promise<{ key: string }>;
 }) {
   const [license, setLicense] = useState<License | null>(null);
   const [activations, setActivations] = useState<Activation[]>([]);
   const [logs, setLogs] = useState<Log[]>([]);
-  const key = decodeURIComponent(params.key);
+  const { key: pkey } = use(params);
+  const key = decodeURIComponent(pkey);
 
   useEffect(() => {
     async function load() {
