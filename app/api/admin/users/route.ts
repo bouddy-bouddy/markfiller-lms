@@ -75,9 +75,9 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(
     {
       _id: user._id,
-      fullName: user.fullName,
+      fullName: user.fullName || "",
       email: user.email,
-      role: user.role,
+      role: (user as any).role || "admin",
       createdAt: user.createdAt,
     },
     { status: 201 }

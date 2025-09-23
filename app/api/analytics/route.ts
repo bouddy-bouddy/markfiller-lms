@@ -48,6 +48,34 @@ export async function GET(req: NextRequest) {
     createdAt: { $gte: last7Days },
   });
 
+  // Time series for charts: daily counts for last 14 days
+  const days = 14;
+  const start = new Date(Date.now() - 1000 * 60 * 60 * 24 * (days - 1));
+  const seriesAgg = async (type: string) =>
+    EventLog.aggregate([
+      { $match: { type, createdAt: { $gte: start } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+  const activationsSeries = await seriesAgg("activation.created");
+  const validationsSeries = await seriesAgg("validation.ok");
+  const createdSeries = await EventLog.aggregate([
+    { $match: { type: "license.created", createdAt: { $gte: start } } },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+
   return NextResponse.json({
     summary: {
       totalLicenses,
@@ -58,6 +86,12 @@ export async function GET(req: NextRequest) {
       totalActivations,
       activationsLast7,
       validationsLast7,
+    },
+    charts: {
+      days,
+      activationsSeries,
+      validationsSeries,
+      createdSeries,
     },
     events,
   });

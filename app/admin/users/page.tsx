@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ export default function UsersPage() {
       if (q) params.set("q", q);
       const res = await fetch(`/api/admin/users?${params}`, {
         credentials: "include",
+        cache: "no-store",
       });
       const data = await res.json();
       if (res.ok) setUsers(data);
@@ -80,7 +81,7 @@ export default function UsersPage() {
               <tbody>
                 {users.map((u) => (
                   <tr key={u._id} className="border-t">
-                    <td className="py-2">{u.fullName || "—"}</td>
+                    <td className="py-2">{u?.fullName || "—"}</td>
                     <td className="py-2">{u.email}</td>
                     <td className="py-2 capitalize">{u.role}</td>
                     <td className="py-2">
@@ -137,7 +138,9 @@ function CreateUserDialog({
         body: JSON.stringify({ fullName, email, password, role }),
       });
       if (!res.ok) {
-        const e = await res.json().catch(() => ({} as any));
+        const e: { error?: string } = await res
+          .json()
+          .catch(() => ({ error: undefined }));
         throw new Error(e.error || "Failed to create user");
       }
       onCreated();
@@ -283,7 +286,9 @@ function EditUserModal({
         }),
       });
       if (!res.ok) {
-        const e = await res.json().catch(() => ({} as any));
+        const e: { error?: string } = await res
+          .json()
+          .catch(() => ({ error: undefined }));
         throw new Error(e.error || "Failed to save user");
       }
       onSaved();
