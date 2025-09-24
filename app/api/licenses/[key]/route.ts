@@ -17,7 +17,7 @@ async function requireAdmin(req: NextRequest) {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
   await connectToDatabase();
   try {
@@ -26,7 +26,8 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const key = decodeURIComponent(params.key);
+  const { key: keyParam } = await params;
+  const key = decodeURIComponent(keyParam);
   const license = await License.findOne({ key }).populate("teacher");
   if (!license)
     return NextResponse.json({ error: "Not found" }, { status: 404 });

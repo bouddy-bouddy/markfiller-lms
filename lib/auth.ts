@@ -1,6 +1,6 @@
-import jwt from "jsonwebtoken";
+import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "";
+const JWT_SECRET: Secret = (process.env.JWT_SECRET || "") as Secret;
 
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is not set in environment variables");
@@ -14,8 +14,12 @@ export type JwtPayload = {
   role: "admin" | "support";
 };
 
-export function signAdminJwt(payload: JwtPayload, expiresIn: string = "12h") {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn });
+export function signAdminJwt(
+  payload: JwtPayload,
+  expiresIn: string | number = "12h"
+) {
+  const options = { expiresIn } as SignOptions as any;
+  return (jwt.sign as any)(payload as object, JWT_SECRET, options);
 }
 
 export function verifyJwt<T = JwtPayload>(token: string): T {
