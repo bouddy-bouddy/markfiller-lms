@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type AdminUser = {
   _id: string;
@@ -256,7 +258,7 @@ function EditUserButton({
   onChanged: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  // delete action handled inside EditUserModal
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <div className="flex items-center gap-2">
@@ -271,11 +273,50 @@ function EditUserButton({
       <Button
         size="sm"
         variant="destructive"
-        onClick={() => setOpen(true)}
+        onClick={() => setConfirmDelete(true)}
         aria-label="Delete user"
       >
         <Trash2 className="h-4 w-4" />
       </Button>
+      {confirmDelete &&
+        createPortal(
+          <Alert
+            variant="destructive"
+            className="fixed bottom-4 right-4 z-50 w-[360px] shadow-lg"
+          >
+            <AlertTitle>Delete this user?</AlertTitle>
+            <AlertDescription className="mt-2 flex items-center justify-between gap-2">
+              <span>This action cannot be undone.</span>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={async () => {
+                    const res = await fetch(`/api/admin/users?id=${user._id}`, {
+                      method: "DELETE",
+                      credentials: "include",
+                    });
+                    if (res.ok) {
+                      toast.success("User deleted");
+                      onChanged();
+                    }
+                    setConfirmDelete(false);
+                  }}
+                >
+                  Delete
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setConfirmDelete(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>,
+          document.body
+        )}
       {open && (
         <EditUserModal
           user={user}

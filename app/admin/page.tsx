@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -39,13 +40,14 @@ export default function AdminHome() {
   const [status, setStatus] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const createSchema = z.object({
     fullName: z.string().min(2),
     email: z.string().email(),
     cin: z.string().min(3),
     allowedDevices: z.number().min(1).max(2).default(1),
   });
-  type CreateValues = z.infer<typeof createSchema>;
+  type CreateValues = z.input<typeof createSchema>;
   const form = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
     defaultValues: { fullName: "", email: "", cin: "", allowedDevices: 1 },
@@ -77,7 +79,6 @@ export default function AdminHome() {
   }
 
   async function remove(key: string) {
-    if (!confirm("Delete this license?")) return;
     const res = await fetch(`/api/licenses?key=${encodeURIComponent(key)}`, {
       method: "DELETE",
       credentials: "include",
@@ -152,8 +153,10 @@ export default function AdminHome() {
                       allowedDevices: 1,
                     });
                     loadLicenses();
-                  } catch (e: any) {
-                    toast.error(e.message || "Error creating license");
+                  } catch (e) {
+                    toast.error(
+                      (e as Error).message || "Error creating license"
+                    );
                   } finally {
                     setCreating(false);
                   }
@@ -297,7 +300,7 @@ export default function AdminHome() {
                       )}
                       <Button
                         variant="destructive"
-                        onClick={() => remove(lic.key)}
+                        onClick={() => setPendingDelete(lic.key)}
                       >
                         Delete
                       </Button>
@@ -311,6 +314,34 @@ export default function AdminHome() {
           </div>
         </CardContent>
       </Card>
+      {pendingDelete && (
+        <Alert
+          variant="destructive"
+          className="flex items-start justify-between gap-4"
+        >
+          <div>
+            <AlertTitle>Delete this license?</AlertTitle>
+            <AlertDescription>
+              This action cannot be undone. This will permanently delete the
+              license and associated data.
+            </AlertDescription>
+          </div>
+          <div className="mt-1 flex gap-2">
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                await remove(pendingDelete);
+                setPendingDelete(null);
+              }}
+            >
+              Delete
+            </Button>
+            <Button variant="outline" onClick={() => setPendingDelete(null)}>
+              Cancel
+            </Button>
+          </div>
+        </Alert>
+      )}
     </div>
   );
 }
