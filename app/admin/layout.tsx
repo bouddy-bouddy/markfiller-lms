@@ -149,8 +149,8 @@ export default function AdminLayout({
   ];
 
   return (
-    <div className="min-h-dvh flex bg-background">
-      <aside className="hidden md:flex w-72 border-r min-h-dvh sticky top-0">
+    <div className="min-h-dvh bg-background md:pl-72">
+      <aside className="hidden md:flex fixed inset-y-0 left-0 w-72 border-r bg-background overflow-y-auto z-40">
         <div className="flex flex-col justify-between w-full p-4">
           <div>
             <div className="px-2 py-3 text-lg font-semibold">
@@ -187,7 +187,7 @@ export default function AdminLayout({
           </div>
         </div>
       </aside>
-      <div className="flex-1">
+      <div className="">
         <header className="md:hidden border-b">
           <div className="flex items-center justify-between p-4">
             <div className="font-semibold">MarkFiller Admin</div>
