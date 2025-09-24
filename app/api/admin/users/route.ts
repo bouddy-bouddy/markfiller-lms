@@ -19,11 +19,21 @@ async function requireAdmin(req: NextRequest) {
 export async function GET(req: NextRequest) {
   await connectToDatabase();
   try {
-    await requireAdmin(req);
+    const payload = await requireAdmin(req);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const q = new URL(req.url).searchParams.get("q");
+  const url = new URL(req.url);
+  const q = url.searchParams.get("q");
+  const me = url.searchParams.get("me");
+  if (me) {
+    const current = await AdminUser.findById(
+      (verifyJwt(req.cookies.get(ADMIN_TOKEN_COOKIE)?.value || "") as any).sub
+    ).select("_id fullName email role createdAt");
+    if (!current)
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(current);
+  }
   const filter: any = {};
   if (q) {
     const re = new RegExp(q, "i");

@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { GraduationCap } from "lucide-react";
 
@@ -8,6 +9,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const [currentName, setCurrentName] = useState<string>("");
   function signOut() {
     // Clear the admin token from localStorage
     localStorage.removeItem("admin_token");
@@ -16,6 +18,20 @@ export default function AdminLayout({
   }
 
   const pathname = usePathname();
+
+  useEffect(() => {
+    async function loadMe() {
+      try {
+        const res = await fetch("/api/admin/users?me=1", {
+          credentials: "include",
+        });
+        if (!res.ok) return;
+        const me = await res.json();
+        setCurrentName(me.fullName || me.email || "Admin");
+      } catch {}
+    }
+    loadMe();
+  }, []);
 
   const nav = [
     {
@@ -161,7 +177,7 @@ export default function AdminLayout({
             </nav>
           </div>
           <div className="mt-6 border-t pt-4">
-            <div className="text-sm font-medium">Admin</div>
+            <div className="text-sm font-medium">{currentName || "Admin"}</div>
             <div className="opacity-70 text-xs break-all">Signed in</div>
             <div className="mt-3">
               <Button variant="outline" size="sm" onClick={signOut}>
