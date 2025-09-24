@@ -5,6 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -64,53 +72,52 @@ export default function UsersPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && load()}
-              className="w-full"
+              className="max-w-md"
             />
             <Button onClick={load}>Search</Button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-background z-10">
-                <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="py-2">Name</th>
-                  <th className="py-2">Email</th>
-                  <th className="py-2">Role</th>
-                  <th className="py-2">Created</th>
-                  <th className="py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u._id} className="border-t hover:bg-muted/40">
-                    <td className="py-2">{u.fullName || "—"}</td>
-                    <td className="py-2">{u.email}</td>
-                    <td className="py-2">
-                      <Badge
-                        variant={
-                          u.role === "admin" ? "destructive" : "secondary"
-                        }
-                      >
-                        {u.role}
-                      </Badge>
-                    </td>
-                    <td className="py-2">
-                      {new Date(u.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="py-2">
-                      <EditUserButton user={u} onChanged={load} />
-                    </td>
-                  </tr>
-                ))}
-                {!users.length && (
-                  <tr>
-                    <td className="py-6 text-center opacity-70" colSpan={5}>
-                      {loading ? "Loading..." : "No users."}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <Table className="text-sm">
+            <TableHeader className="sticky top-0 bg-background z-10">
+              <TableRow className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <TableHead className="py-2">Name</TableHead>
+                <TableHead className="py-2">Email</TableHead>
+                <TableHead className="py-2">Role</TableHead>
+                <TableHead className="py-2">Created</TableHead>
+                <TableHead className="py-2">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((u) => (
+                <TableRow key={u._id} className="hover:bg-muted/40">
+                  <TableCell className="py-2">{u.fullName || "—"}</TableCell>
+                  <TableCell className="py-2">{u.email}</TableCell>
+                  <TableCell className="py-2">
+                    <Badge
+                      variant={u.role === "admin" ? "destructive" : "secondary"}
+                    >
+                      {u.role}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="py-2">
+                    {new Date(u.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="py-2">
+                    <EditUserButton user={u} onChanged={load} />
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!users.length && (
+                <TableRow>
+                  <TableCell
+                    className="py-6 text-center opacity-70"
+                    colSpan={5}
+                  >
+                    {loading ? "Loading..." : "No users."}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
@@ -214,7 +221,10 @@ function CreateUserDialog({
           </div>
           <div>
             <div className="text-sm mb-1">Role</div>
-            <Select value={role} onValueChange={(v) => setRole(v as any)}>
+            <Select
+              value={role}
+              onValueChange={(v) => setRole(v as "admin" | "support")}
+            >
               <SelectTrigger className="w-56">
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
@@ -246,14 +256,7 @@ function EditUserButton({
   onChanged: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  async function remove() {
-    if (!confirm("Delete this user?")) return;
-    const res = await fetch(`/api/admin/users?id=${user._id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    if (res.ok) onChanged();
-  }
+  // delete action handled inside EditUserModal
 
   return (
     <div className="flex items-center gap-2">
@@ -268,7 +271,7 @@ function EditUserButton({
       <Button
         size="sm"
         variant="destructive"
-        onClick={remove}
+        onClick={() => setOpen(true)}
         aria-label="Delete user"
       >
         <Trash2 className="h-4 w-4" />
@@ -332,23 +335,7 @@ function EditUserModal({
     }
   }
 
-  async function remove() {
-    if (!confirm("Delete this user?")) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/admin/users?id=${user._id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Delete failed");
-      toast.success("User deleted");
-      onSaved();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  }
+  // delete handled via separate control in modal footer if needed
 
   return (
     <div
@@ -388,7 +375,10 @@ function EditUserModal({
           </div>
           <div>
             <div className="text-sm mb-1">Role</div>
-            <Select value={role} onValueChange={(v) => setRole(v as any)}>
+            <Select
+              value={role}
+              onValueChange={(v) => setRole(v as "admin" | "support")}
+            >
               <SelectTrigger className="w-56">
                 <SelectValue placeholder="Role" />
               </SelectTrigger>

@@ -2,6 +2,14 @@
 import { use, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type Activation = {
   _id: string;
@@ -79,48 +87,50 @@ export default function LicenseDetails({
           <CardTitle>Registered Devices</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left opacity-70">
-              <tr>
-                <th className="py-2">Device ID</th>
-                <th className="py-2">Activated</th>
-                <th className="py-2">Last Seen</th>
-                <th className="py-2">IP</th>
-                <th className="py-2">User Agent</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="text-sm">
+            <TableHeader className="text-left opacity-70">
+              <TableRow>
+                <TableHead className="py-2">Device ID</TableHead>
+                <TableHead className="py-2">Activated</TableHead>
+                <TableHead className="py-2">Last Seen</TableHead>
+                <TableHead className="py-2">IP</TableHead>
+                <TableHead className="py-2">User Agent</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {activations.map((a) => (
-                <tr key={a._id} className="border-t">
-                  <td className="py-2 font-mono text-xs break-all">
+                <TableRow key={a._id}>
+                  <TableCell className="py-2 font-mono text-xs break-all">
                     {a.deviceId}
-                  </td>
-                  <td className="py-2">
+                  </TableCell>
+                  <TableCell className="py-2">
                     {new Date(a.activatedAt).toLocaleString()}
-                  </td>
-                  <td className="py-2">
+                  </TableCell>
+                  <TableCell className="py-2">
                     {a.lastSeenAt
                       ? new Date(a.lastSeenAt).toLocaleString()
                       : "—"}
-                  </td>
-                  <td className="py-2">{a.lastIp || a.ip || "—"}</td>
-                  <td
+                  </TableCell>
+                  <TableCell className="py-2">
+                    {a.lastIp || a.ip || "—"}
+                  </TableCell>
+                  <TableCell
                     className="py-2 truncate max-w-[360px]"
                     title={a.userAgent}
                   >
                     {a.userAgent || ""}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
               {!activations.length && (
-                <tr>
-                  <td className="py-3 opacity-70" colSpan={5}>
+                <TableRow>
+                  <TableCell className="py-3 opacity-70" colSpan={5}>
                     No devices yet.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
@@ -129,33 +139,33 @@ export default function LicenseDetails({
           <CardTitle>Activity Logs</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left opacity-70">
-              <tr>
-                <th className="py-2">Time</th>
-                <th className="py-2">Type</th>
-                <th className="py-2">Message</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="text-sm">
+            <TableHeader className="text-left opacity-70">
+              <TableRow>
+                <TableHead className="py-2">Time</TableHead>
+                <TableHead className="py-2">Type</TableHead>
+                <TableHead className="py-2">Message</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {logs.map((l) => (
-                <tr key={l._id} className="border-t">
-                  <td className="py-2">
+                <TableRow key={l._id}>
+                  <TableCell className="py-2">
                     {new Date(l.createdAt).toLocaleString()}
-                  </td>
-                  <td className="py-2">{l.type}</td>
-                  <td className="py-2">{l.message || ""}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="py-2">{l.type}</TableCell>
+                  <TableCell className="py-2">{l.message || ""}</TableCell>
+                </TableRow>
               ))}
               {!logs.length && (
-                <tr>
-                  <td className="py-3 opacity-70" colSpan={3}>
+                <TableRow>
+                  <TableCell className="py-3 opacity-70" colSpan={3}>
                     No activity yet.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

@@ -138,7 +138,7 @@ export default function AdminLayout({
         <div className="flex flex-col justify-between w-full p-4">
           <div>
             <div className="px-2 py-3 text-lg font-semibold">
-              MarkFiller Admin
+              MarkFiller LMS
             </div>
             <nav className="mt-2 space-y-1">
               {nav.map((n) => {

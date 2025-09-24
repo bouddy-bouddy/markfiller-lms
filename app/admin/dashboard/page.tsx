@@ -1,6 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type Summary = {
   totalLicenses: number;
@@ -55,33 +63,33 @@ export default function AdminDashboard() {
           <CardTitle>Recent Activity</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left opacity-70">
-              <tr>
-                <th className="py-2">Time</th>
-                <th className="py-2">Type</th>
-                <th className="py-2">Message</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="text-sm">
+            <TableHeader className="text-left opacity-70">
+              <TableRow>
+                <TableHead className="py-2">Time</TableHead>
+                <TableHead className="py-2">Type</TableHead>
+                <TableHead className="py-2">Message</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {events.map((e) => (
-                <tr key={e._id} className="border-t">
-                  <td className="py-2">
+                <TableRow key={e._id}>
+                  <TableCell className="py-2">
                     {new Date(e.createdAt).toLocaleString()}
-                  </td>
-                  <td className="py-2">{e.type}</td>
-                  <td className="py-2">{e.message || ""}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="py-2">{e.type}</TableCell>
+                  <TableCell className="py-2">{e.message || ""}</TableCell>
+                </TableRow>
               ))}
               {!events.length && (
-                <tr>
-                  <td className="py-3 opacity-70" colSpan={3}>
+                <TableRow>
+                  <TableCell className="py-3 opacity-70" colSpan={3}>
                     {loading ? "Loading..." : "No recent activity."}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

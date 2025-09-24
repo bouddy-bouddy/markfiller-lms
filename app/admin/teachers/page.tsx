@@ -3,6 +3,14 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type TeacherRow = {
   _id: string;
@@ -55,39 +63,37 @@ export default function TeachersPage() {
             />
             <Button onClick={load}>Search</Button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left opacity-70">
-                <tr>
-                  <th className="py-2">Name</th>
-                  <th className="py-2">Email</th>
-                  <th className="py-2">CIN</th>
-                  <th className="py-2">Licenses</th>
-                  <th className="py-2">Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((t) => (
-                  <tr key={t._id} className="border-t">
-                    <td className="py-2">{t.fullName}</td>
-                    <td className="py-2">{t.email}</td>
-                    <td className="py-2">{t.cin || "—"}</td>
-                    <td className="py-2">{t.licenses}</td>
-                    <td className="py-2">
-                      {new Date(t.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-                {!rows.length && (
-                  <tr>
-                    <td className="py-3 opacity-70" colSpan={5}>
-                      {loading ? "Loading..." : "No teachers."}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <Table className="text-sm">
+            <TableHeader className="text-left opacity-70">
+              <TableRow>
+                <TableHead className="py-2">Name</TableHead>
+                <TableHead className="py-2">Email</TableHead>
+                <TableHead className="py-2">CIN</TableHead>
+                <TableHead className="py-2">Licenses</TableHead>
+                <TableHead className="py-2">Created</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((t) => (
+                <TableRow key={t._id}>
+                  <TableCell className="py-2">{t.fullName}</TableCell>
+                  <TableCell className="py-2">{t.email}</TableCell>
+                  <TableCell className="py-2">{t.cin || "—"}</TableCell>
+                  <TableCell className="py-2">{t.licenses}</TableCell>
+                  <TableCell className="py-2">
+                    {new Date(t.createdAt).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!rows.length && (
+                <TableRow>
+                  <TableCell className="py-3 opacity-70" colSpan={5}>
+                    {loading ? "Loading..." : "No teachers."}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>
