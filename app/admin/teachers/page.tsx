@@ -158,7 +158,8 @@ function TeacherActions({
             <DialogTitle>Delete Teacher</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete{" "}
-              <strong>{teacher.fullName}</strong>? This action cannot be undone.
+              <strong>{teacher.fullName}</strong>?<br /> This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

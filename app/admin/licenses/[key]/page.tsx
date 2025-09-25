@@ -46,7 +46,16 @@ type License = {
   validUntil: string;
   allowedDevices: number;
   createdAt?: string;
-  teacher?: { fullName?: string; email?: string; cin?: string; phone?: string };
+  teacher?: {
+    fullName?: string;
+    email?: string;
+    cin?: string;
+    phone?: string;
+    level?: "الإعدادي" | "الثانوي";
+    subject?: string;
+    classesCount?: number;
+    testsPerTerm?: number;
+  };
 };
 
 export default function LicenseDetails({
@@ -110,8 +119,8 @@ export default function LicenseDetails({
           <DialogHeader>
             <DialogTitle>Delete License</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this license? This action cannot
-              be undone.
+              Are you sure you want to delete this license?
+              <br /> This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -234,13 +243,33 @@ export default function LicenseDetails({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">
-              Customer Identification Number
-            </CardTitle>
+            <CardTitle className="text-base">Teacher Details</CardTitle>
           </CardHeader>
-          <CardContent className="text-sm">
-            <div className="text-xs opacity-70">National ID</div>
-            <div className="font-medium">{license.teacher?.cin || "—"}</div>
+          <CardContent className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <div className="text-xs opacity-70">Level</div>
+              <div className="mt-1 font-medium">
+                {license.teacher?.level || "—"}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs opacity-70">Subject Taught</div>
+              <div className="mt-1 font-medium">
+                {license.teacher?.subject || "—"}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs opacity-70">Classes Count</div>
+              <div className="mt-1 font-medium">
+                {license.teacher?.classesCount || "—"}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs opacity-70">Tests per Term</div>
+              <div className="mt-1 font-medium">
+                {license.teacher?.testsPerTerm || "—"}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

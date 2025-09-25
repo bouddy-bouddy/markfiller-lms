@@ -290,8 +290,8 @@ function EditUserButton({
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete{" "}
-              <strong>{user.fullName || user.email}</strong>? This action cannot
-              be undone.
+              <strong>{user.fullName || user.email}</strong>?<br /> This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -28,7 +28,11 @@ export async function GET(
 
   const { key: keyParam } = await params;
   const key = decodeURIComponent(keyParam);
-  const license = await License.findOne({ key }).populate("teacher");
+  const license = await License.findOne({ key }).populate({
+    path: "teacher",
+    select:
+      "fullName email cin phone level subject classesCount testsPerTerm createdAt",
+  });
   if (!license)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
