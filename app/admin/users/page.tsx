@@ -159,9 +159,9 @@ function CreateUserDialog({
         const e: { error?: string } = await res
           .json()
           .catch(() => ({ error: undefined }));
-        throw new Error(e.error || "Failed to create user");
+        throw new Error(e.error || `Failed to create user (${res.status})`);
       }
-      toast.success("User created");
+      toast.success(`User "${fullName || email}" created successfully`);
       onCreated();
       onClose();
     } catch (e) {
@@ -297,8 +297,18 @@ function EditUserButton({
                       credentials: "include",
                     });
                     if (res.ok) {
-                      toast.success("User deleted");
+                      toast.success(
+                        `User "${
+                          user.fullName || user.email
+                        }" deleted successfully`
+                      );
                       onChanged();
+                    } else {
+                      const errorData = await res.json().catch(() => ({}));
+                      toast.error(
+                        errorData.error ||
+                          `Failed to delete user (${res.status})`
+                      );
                     }
                     setConfirmDelete(false);
                   }}
@@ -365,9 +375,9 @@ function EditUserModal({
         const e: { error?: string } = await res
           .json()
           .catch(() => ({ error: undefined }));
-        throw new Error(e.error || "Failed to save user");
+        throw new Error(e.error || `Failed to update user (${res.status})`);
       }
-      toast.success("User updated");
+      toast.success(`User "${fullName || email}" updated successfully`);
       onSaved();
     } catch (e) {
       toast.error((e as Error).message);

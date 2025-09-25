@@ -69,21 +69,56 @@ export default function AdminHome() {
   }
 
   async function mutate(key: string, next: "active" | "suspended") {
-    const res = await fetch("/api/licenses", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ key, status: next }),
-    });
-    if (res.ok) loadLicenses();
+    try {
+      const res = await fetch("/api/licenses", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ key, status: next }),
+      });
+      if (res.ok) {
+        toast.success(
+          `License ${
+            next === "active" ? "activated" : "suspended"
+          } successfully`
+        );
+        loadLicenses();
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(
+          errorData.error ||
+            `Failed to ${next === "active" ? "activate" : "suspend"} license (${
+              res.status
+            })`
+        );
+      }
+    } catch (e) {
+      toast.error(
+        `Failed to ${next === "active" ? "activate" : "suspend"} license: ${
+          (e as Error).message
+        }`
+      );
+    }
   }
 
   async function remove(key: string) {
-    const res = await fetch(`/api/licenses?key=${encodeURIComponent(key)}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    if (res.ok) loadLicenses();
+    try {
+      const res = await fetch(`/api/licenses?key=${encodeURIComponent(key)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        toast.success("License deleted successfully");
+        loadLicenses();
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(
+          errorData.error || `Failed to delete license (${res.status})`
+        );
+      }
+    } catch (e) {
+      toast.error(`Failed to delete license: ${(e as Error).message}`);
+    }
   }
 
   useEffect(() => {
@@ -144,8 +179,16 @@ export default function AdminHome() {
                       credentials: "include",
                       body: JSON.stringify(values),
                     });
-                    if (!res.ok) throw new Error("Failed to create");
-                    toast.success("License created and email sent");
+                    if (!res.ok) {
+                      const errorData = await res.json().catch(() => ({}));
+                      throw new Error(
+                        errorData.error ||
+                          `Failed to create license (${res.status})`
+                      );
+                    }
+                    toast.success(
+                      "License created and email sent successfully"
+                    );
                     form.reset({
                       fullName: "",
                       email: "",

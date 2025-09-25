@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type Settings = {
   [key: string]: any;
@@ -36,26 +37,39 @@ export default function SettingsPage() {
         credentials: "include",
         body: JSON.stringify(settings),
       });
-      if (!res.ok) throw new Error("Save failed");
-      alert("Settings saved");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `Failed to save settings (${res.status})`
+        );
+      }
+      toast.success("Settings saved successfully");
     } catch (e) {
-      alert((e as Error).message);
+      toast.error((e as Error).message);
     } finally {
       setSaving(false);
     }
   }
 
   async function sendTest() {
-    if (!testTo) return alert("Enter an email address");
-    const res = await fetch("/api/admin/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ action: "test-email", to: testTo }),
-    });
-    const data = await res.json().catch(() => ({} as any));
-    if (res.ok) alert("Test email sent");
-    else alert(data.error || "Failed to send test email");
+    if (!testTo) return toast.error("Please enter an email address");
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ action: "test-email", to: testTo }),
+      });
+      const data = await res.json().catch(() => ({} as any));
+      if (res.ok) {
+        toast.success("Test email sent successfully");
+        setTestTo("");
+      } else {
+        toast.error(data.error || `Failed to send test email (${res.status})`);
+      }
+    } catch (e) {
+      toast.error(`Failed to send test email: ${(e as Error).message}`);
+    }
   }
 
   useEffect(() => {

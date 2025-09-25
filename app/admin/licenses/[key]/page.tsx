@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Calendar, Clock } from "lucide-react";
+import { toast } from "sonner";
 
 type Activation = {
   _id: string;
@@ -112,16 +113,29 @@ export default function LicenseDetails({
                   size="sm"
                   variant="destructive"
                   onClick={async () => {
-                    const res = await fetch(
-                      `/api/licenses?key=${encodeURIComponent(key)}`,
-                      {
-                        method: "DELETE",
-                        credentials: "include",
+                    try {
+                      const res = await fetch(
+                        `/api/licenses?key=${encodeURIComponent(key)}`,
+                        {
+                          method: "DELETE",
+                          credentials: "include",
+                        }
+                      );
+                      if (res.ok) {
+                        toast.success("License deleted successfully");
+                        setConfirmDelete(false);
+                        window.location.href = "/admin";
+                      } else {
+                        const errorData = await res.json().catch(() => ({}));
+                        toast.error(
+                          errorData.error ||
+                            `Failed to delete license (${res.status})`
+                        );
                       }
-                    );
-                    if (res.ok) {
-                      setConfirmDelete(false);
-                      window.location.href = "/admin";
+                    } catch (e) {
+                      toast.error(
+                        `Failed to delete license: ${(e as Error).message}`
+                      );
                     }
                   }}
                 >

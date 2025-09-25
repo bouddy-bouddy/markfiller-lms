@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -39,9 +40,13 @@ export default function Home() {
       const data = await parseJsonSafe(res);
       if (res.ok) {
         if (data?.token) localStorage.setItem("admin_token", data.token);
+        toast.success("Login successful! Redirecting...");
         window.location.replace("/admin");
       } else {
-        alert((data && (data.error as string)) || "Login failed");
+        toast.error(
+          (data && (data.error as string)) ||
+            "Login failed. Please check your credentials."
+        );
       }
     } finally {
       setLoading(false);
@@ -78,7 +83,7 @@ export default function Home() {
 
         <CardFooter>
           <p className="text-center text-sm  w-full text-muted-foreground">
-            VoxMark Admin Portal - Restricted Access
+            MarkFiller Admin Portal - Restricted Access
           </p>
         </CardFooter>
       </Card>
