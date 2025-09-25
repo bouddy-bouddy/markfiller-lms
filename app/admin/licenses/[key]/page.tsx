@@ -126,6 +126,13 @@ export default function LicenseDetails({
             allowedDevices: data.license.allowedDevices || 1,
             status: data.license.status || "active",
           });
+
+          // Pre-populate extend form with current expiration date
+          setExtendForm({
+            newExpirationDate: new Date(data.license.validUntil)
+              .toISOString()
+              .split("T")[0],
+          });
         }
       }
     }
@@ -529,9 +536,6 @@ export default function LicenseDetails({
                 <SelectContent>
                   <SelectItem value="1">1 device</SelectItem>
                   <SelectItem value="2">2 devices</SelectItem>
-                  <SelectItem value="3">3 devices</SelectItem>
-                  <SelectItem value="4">4 devices</SelectItem>
-                  <SelectItem value="5">5 devices</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -637,7 +641,7 @@ export default function LicenseDetails({
                     newExpirationDate: e.target.value,
                   })
                 }
-                min={new Date().toISOString().split("T")[0]}
+                min={new Date(license.validUntil).toISOString().split("T")[0]}
               />
             </div>
           </div>
@@ -654,6 +658,17 @@ export default function LicenseDetails({
                   toast.error("Please select a new expiration date");
                   return;
                 }
+
+                const newDate = new Date(extendForm.newExpirationDate);
+                const currentExpiration = new Date(license.validUntil);
+
+                if (newDate <= currentExpiration) {
+                  toast.error(
+                    "New expiration date must be after the current expiration date"
+                  );
+                  return;
+                }
+
                 setSaving(true);
                 try {
                   const res = await fetch(
