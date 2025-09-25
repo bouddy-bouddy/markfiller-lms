@@ -2,8 +2,14 @@
 import { use, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { createPortal } from "react-dom";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -99,60 +105,53 @@ export default function LicenseDetails({
           </Button>
         </div>
       </div>
-      {confirmDelete &&
-        createPortal(
-          <Alert
-            variant="destructive"
-            className="fixed bottom-4 right-4 z-50 w-[360px] shadow-lg"
-          >
-            <AlertTitle>Delete this license?</AlertTitle>
-            <AlertDescription className="mt-2 flex items-center justify-between gap-2">
-              <span>This action cannot be undone.</span>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(
-                        `/api/licenses?key=${encodeURIComponent(key)}`,
-                        {
-                          method: "DELETE",
-                          credentials: "include",
-                        }
-                      );
-                      if (res.ok) {
-                        toast.success("License deleted successfully");
-                        setConfirmDelete(false);
-                        window.location.href = "/admin";
-                      } else {
-                        const errorData = await res.json().catch(() => ({}));
-                        toast.error(
-                          errorData.error ||
-                            `Failed to delete license (${res.status})`
-                        );
-                      }
-                    } catch (e) {
-                      toast.error(
-                        `Failed to delete license: ${(e as Error).message}`
-                      );
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete License</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this license? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDelete(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                try {
+                  const res = await fetch(
+                    `/api/licenses?key=${encodeURIComponent(key)}`,
+                    {
+                      method: "DELETE",
+                      credentials: "include",
                     }
-                  }}
-                >
-                  Delete
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setConfirmDelete(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>,
-          document.body
-        )}
+                  );
+                  if (res.ok) {
+                    toast.success("License deleted successfully");
+                    setConfirmDelete(false);
+                    window.location.href = "/admin";
+                  } else {
+                    const errorData = await res.json().catch(() => ({}));
+                    toast.error(
+                      errorData.error ||
+                        `Failed to delete license (${res.status})`
+                    );
+                  }
+                } catch (e) {
+                  toast.error(
+                    `Failed to delete license: ${(e as Error).message}`
+                  );
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>

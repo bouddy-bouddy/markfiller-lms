@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,14 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type AdminUser = {
   _id: string;
@@ -278,55 +284,46 @@ function EditUserButton({
       >
         <Trash2 className="h-4 w-4" />
       </Button>
-      {confirmDelete &&
-        createPortal(
-          <Alert
-            variant="destructive"
-            className="fixed bottom-4 right-4 z-50 w-[360px] shadow-lg"
-          >
-            <AlertTitle>Delete this user?</AlertTitle>
-            <AlertDescription className="mt-2 flex items-center justify-between gap-2">
-              <span>This action cannot be undone.</span>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={async () => {
-                    const res = await fetch(`/api/admin/users?id=${user._id}`, {
-                      method: "DELETE",
-                      credentials: "include",
-                    });
-                    if (res.ok) {
-                      toast.success(
-                        `User "${
-                          user.fullName || user.email
-                        }" deleted successfully`
-                      );
-                      onChanged();
-                    } else {
-                      const errorData = await res.json().catch(() => ({}));
-                      toast.error(
-                        errorData.error ||
-                          `Failed to delete user (${res.status})`
-                      );
-                    }
-                    setConfirmDelete(false);
-                  }}
-                >
-                  Delete
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setConfirmDelete(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>,
-          document.body
-        )}
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>{user.fullName || user.email}</strong>? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDelete(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                const res = await fetch(`/api/admin/users?id=${user._id}`, {
+                  method: "DELETE",
+                  credentials: "include",
+                });
+                if (res.ok) {
+                  toast.success(
+                    `User "${user.fullName || user.email}" deleted successfully`
+                  );
+                  onChanged();
+                  setConfirmDelete(false);
+                } else {
+                  const errorData = await res.json().catch(() => ({}));
+                  toast.error(
+                    errorData.error || `Failed to delete user (${res.status})`
+                  );
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {open && (
         <EditUserModal
           user={user}
