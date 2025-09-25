@@ -10,6 +10,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -67,6 +76,28 @@ export default function LicenseDetails({
   const [activations, setActivations] = useState<Activation[]>([]);
   const [logs, setLogs] = useState<Log[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [extendDialogOpen, setExtendDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Edit form state
+  const [editForm, setEditForm] = useState({
+    fullName: "",
+    email: "",
+    cin: "",
+    phone: "",
+    level: "" as "الإعدادي" | "الثانوي" | "",
+    subject: "",
+    classesCount: "",
+    testsPerTerm: "",
+    allowedDevices: 1,
+    status: "active" as "active" | "suspended",
+  });
+
+  // Extend form state
+  const [extendForm, setExtendForm] = useState({
+    newExpirationDate: "",
+  });
   const { key: pkey } = use(params);
   const key = decodeURIComponent(pkey);
 
@@ -80,6 +111,22 @@ export default function LicenseDetails({
         setLicense(data.license);
         setActivations(data.activations || []);
         setLogs(data.logs || []);
+
+        // Populate edit form with current data
+        if (data.license) {
+          setEditForm({
+            fullName: data.license.teacher?.fullName || "",
+            email: data.license.teacher?.email || "",
+            cin: data.license.teacher?.cin || "",
+            phone: data.license.teacher?.phone || "",
+            level: data.license.teacher?.level || "",
+            subject: data.license.teacher?.subject || "",
+            classesCount: data.license.teacher?.classesCount?.toString() || "",
+            testsPerTerm: data.license.teacher?.testsPerTerm?.toString() || "",
+            allowedDevices: data.license.allowedDevices || 1,
+            status: data.license.status || "active",
+          });
+        }
       }
     }
     load();
@@ -97,16 +144,10 @@ export default function LicenseDetails({
           <div className="text-xl font-semibold">License Details</div>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => alert("Edit not implemented yet")}
-          >
+          <Button variant="outline" onClick={() => setEditDialogOpen(true)}>
             Edit
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => alert("Extend not implemented yet")}
-          >
+          <Button variant="secondary" onClick={() => setExtendDialogOpen(true)}>
             Extend
           </Button>
           <Button variant="destructive" onClick={() => setConfirmDelete(true)}>
@@ -360,6 +401,298 @@ export default function LicenseDetails({
           </Table>
         </CardContent>
       </Card>
+
+      {/* Edit License Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit License</DialogTitle>
+            <DialogDescription>
+              Update the license and teacher information. Click save when you're
+              done.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                value={editForm.fullName}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, fullName: e.target.value })
+                }
+                placeholder="Teacher's full name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={editForm.email}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, email: e.target.value })
+                }
+                placeholder="teacher@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cin">National ID</Label>
+              <Input
+                id="cin"
+                value={editForm.cin}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, cin: e.target.value })
+                }
+                placeholder="National ID"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                value={editForm.phone}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, phone: e.target.value })
+                }
+                placeholder="Phone number"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="level">Level</Label>
+              <Select
+                value={editForm.level}
+                onValueChange={(value) =>
+                  setEditForm({
+                    ...editForm,
+                    level: value as "الإعدادي" | "الثانوي",
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="الإعدادي">
+                    الإعدادي (Middle School)
+                  </SelectItem>
+                  <SelectItem value="الثانوي">الثانوي (High School)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="subject">Subject Taught</Label>
+              <Input
+                id="subject"
+                value={editForm.subject}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, subject: e.target.value })
+                }
+                placeholder="Subject taught"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="classesCount">Classes Count</Label>
+              <Input
+                id="classesCount"
+                type="number"
+                value={editForm.classesCount}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, classesCount: e.target.value })
+                }
+                placeholder="Number of classes"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="testsPerTerm">Tests per Term</Label>
+              <Input
+                id="testsPerTerm"
+                type="number"
+                value={editForm.testsPerTerm}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, testsPerTerm: e.target.value })
+                }
+                placeholder="Tests per term"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="allowedDevices">Maximum Devices</Label>
+              <Select
+                value={editForm.allowedDevices.toString()}
+                onValueChange={(value) =>
+                  setEditForm({ ...editForm, allowedDevices: parseInt(value) })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 device</SelectItem>
+                  <SelectItem value="2">2 devices</SelectItem>
+                  <SelectItem value="3">3 devices</SelectItem>
+                  <SelectItem value="4">4 devices</SelectItem>
+                  <SelectItem value="5">5 devices</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={editForm.status}
+                onValueChange={(value) =>
+                  setEditForm({
+                    ...editForm,
+                    status: value as "active" | "suspended",
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="suspended">Suspended</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                setSaving(true);
+                try {
+                  const res = await fetch(
+                    `/api/licenses/${encodeURIComponent(key)}`,
+                    {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify({
+                        teacher: {
+                          fullName: editForm.fullName,
+                          email: editForm.email,
+                          cin: editForm.cin,
+                          phone: editForm.phone,
+                          level: editForm.level || undefined,
+                          subject: editForm.subject,
+                          classesCount: editForm.classesCount
+                            ? parseInt(editForm.classesCount)
+                            : undefined,
+                          testsPerTerm: editForm.testsPerTerm
+                            ? parseInt(editForm.testsPerTerm)
+                            : undefined,
+                        },
+                        allowedDevices: editForm.allowedDevices,
+                        status: editForm.status,
+                      }),
+                    }
+                  );
+                  if (res.ok) {
+                    toast.success("License updated successfully");
+                    setEditDialogOpen(false);
+                    // Reload the page data
+                    window.location.reload();
+                  } else {
+                    const errorData = await res.json().catch(() => ({}));
+                    toast.error(errorData.error || "Failed to update license");
+                  }
+                } catch (e) {
+                  toast.error(
+                    `Failed to update license: ${(e as Error).message}`
+                  );
+                } finally {
+                  setSaving(false);
+                }
+              }}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Extend License Dialog */}
+      <Dialog open={extendDialogOpen} onOpenChange={setExtendDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Extend License</DialogTitle>
+            <DialogDescription>
+              Set a new expiration date for this license.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newExpirationDate">New Expiration Date</Label>
+              <Input
+                id="newExpirationDate"
+                type="date"
+                value={extendForm.newExpirationDate}
+                onChange={(e) =>
+                  setExtendForm({
+                    ...extendForm,
+                    newExpirationDate: e.target.value,
+                  })
+                }
+                min={new Date().toISOString().split("T")[0]}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setExtendDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!extendForm.newExpirationDate) {
+                  toast.error("Please select a new expiration date");
+                  return;
+                }
+                setSaving(true);
+                try {
+                  const res = await fetch(
+                    `/api/licenses/${encodeURIComponent(key)}`,
+                    {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify({
+                        validUntil: new Date(
+                          extendForm.newExpirationDate
+                        ).toISOString(),
+                      }),
+                    }
+                  );
+                  if (res.ok) {
+                    toast.success("License extended successfully");
+                    setExtendDialogOpen(false);
+                    // Reload the page data
+                    window.location.reload();
+                  } else {
+                    const errorData = await res.json().catch(() => ({}));
+                    toast.error(errorData.error || "Failed to extend license");
+                  }
+                } catch (e) {
+                  toast.error(
+                    `Failed to extend license: ${(e as Error).message}`
+                  );
+                } finally {
+                  setSaving(false);
+                }
+              }}
+              disabled={saving}
+            >
+              {saving ? "Extending..." : "Extend License"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
