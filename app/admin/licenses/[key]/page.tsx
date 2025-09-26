@@ -415,8 +415,8 @@ export default function LicenseDetails({
           <DialogHeader>
             <DialogTitle>Edit License</DialogTitle>
             <DialogDescription>
-              Update the license and teacher information. Click save when you're
-              done.
+              Update the license and teacher information. Click save when
+              you&apos;re done.
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">

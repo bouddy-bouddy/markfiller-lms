@@ -19,7 +19,7 @@ async function requireAdmin(req: NextRequest) {
 export async function GET(req: NextRequest) {
   await connectToDatabase();
   try {
-    const payload = await requireAdmin(req);
+    await requireAdmin(req);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

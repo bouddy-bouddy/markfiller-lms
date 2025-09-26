@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
-import { License, Teacher, Activation, EventLog } from "@/lib/models";
+import { License, Activation, EventLog } from "@/lib/models";
 import { differenceInDays } from "date-fns";
 
 export const dynamic = "force-dynamic";
@@ -155,11 +155,8 @@ export async function POST(req: NextRequest) {
         metadata: { deviceId, deviceInfo },
       });
     } else {
-      // Update last validation time for existing device
-      currentDeviceActivation.lastValidatedAt = now;
-      if (deviceInfo) {
-        currentDeviceActivation.deviceInfo = deviceInfo;
-      }
+      // Update last seen time for existing device
+      currentDeviceActivation.lastSeenAt = now;
       await currentDeviceActivation.save();
     }
 
@@ -179,8 +176,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       valid: true,
       teacher: {
-        fullName: license.teacher?.fullName || "Unknown",
-        email: license.teacher?.email || "",
+        fullName: (license.teacher as any)?.fullName || "Unknown",
+        email: (license.teacher as any)?.email || "",
       },
       expiresAt: validUntil.toISOString(),
       remainingDays,

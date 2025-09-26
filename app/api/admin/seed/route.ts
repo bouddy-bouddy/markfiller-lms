@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectToDatabase } from "@/lib/db";
 import { AdminUser } from "@/lib/models";
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   await connectToDatabase();
 
   const email = process.env.ADMIN_EMAIL;

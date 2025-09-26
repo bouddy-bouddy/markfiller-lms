@@ -11,7 +11,7 @@ type Settings = {
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>({});
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testTo, setTestTo] = useState("");
 

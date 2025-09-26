@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ export default function TeachersPage() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -49,11 +49,11 @@ export default function TeachersPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [q]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   return (
     <div className="space-y-6">

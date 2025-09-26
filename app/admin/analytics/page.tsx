@@ -198,7 +198,7 @@ function ChartLines({
           stroke="#e5e7eb"
         />
         {/* Labels */}
-        {days.map((d, i) => (
+        {days.map((d) => (
           <text
             key={d}
             x={xScale(d)}
