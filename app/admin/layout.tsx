@@ -18,6 +18,11 @@ export default function AdminLayout({
   }
 
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function loadMe() {
@@ -158,7 +163,11 @@ export default function AdminLayout({
             </div>
             <nav className="mt-2 space-y-1">
               {nav.map((n) => {
-                const isActive = pathname === n.href;
+                const isActive =
+                  mounted &&
+                  (pathname === n.href ||
+                    (n.href === "/admin" &&
+                      pathname.startsWith("/admin/licenses/")));
                 return (
                   <a
                     key={`${n.href}-${n.label}`}
