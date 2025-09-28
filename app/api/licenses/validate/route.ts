@@ -1,3 +1,4 @@
+// app/api/licenses/validate/route.ts - ENHANCED VERSION
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { License, Activation, EventLog } from "@/lib/models";
@@ -19,12 +20,26 @@ interface ValidationRequest {
   };
 }
 
+// Helper function to get client IP
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) {
+    return realIp;
+  }
+  return "unknown";
+}
+
 export async function POST(req: NextRequest) {
   await connectToDatabase();
 
   try {
     const body: ValidationRequest = await req.json();
     const { key, deviceId, deviceInfo } = body;
+    const clientIp = getClientIp(req);
 
     // Validate request
     if (!key || !deviceId) {
@@ -45,13 +60,13 @@ export async function POST(req: NextRequest) {
       await EventLog.create({
         type: "validation.failed",
         message: `Invalid license key attempted: ${key}`,
-        metadata: { deviceId, deviceInfo },
+        metadata: { deviceId, deviceInfo, ip: clientIp },
       });
 
       return NextResponse.json(
         {
           valid: false,
-          message: "مفتاح الترخيص غير موجود",
+          message: "مفتاح الترخيص غير صحيح أو غير موجود",
         },
         { status: 404 }
       );
@@ -64,7 +79,7 @@ export async function POST(req: NextRequest) {
         teacher: license.teacher?._id,
         type: "validation.failed",
         message: `License is ${license.status}`,
-        metadata: { deviceId },
+        metadata: { deviceId, ip: clientIp },
       });
 
       return NextResponse.json(
@@ -73,78 +88,84 @@ export async function POST(req: NextRequest) {
           message:
             license.status === "suspended"
               ? "تم تعليق هذا الترخيص. الرجاء التواصل مع الدعم."
-              : "الترخيص غير نشط",
+              : "انتهت صلاحية هذا الترخيص.",
         },
         { status: 403 }
       );
     }
 
-    // Check expiration
+    // Check expiration date
     const now = new Date();
-    const validUntil = new Date(license.validUntil);
+    if (license.validUntil && license.validUntil < now) {
+      // Update license status
+      license.status = "expired";
+      await license.save();
 
-    if (validUntil < now) {
       await EventLog.create({
         license: license._id,
         teacher: license.teacher?._id,
         type: "validation.failed",
         message: "License expired",
-        metadata: {
-          expiredAt: validUntil.toISOString(),
-          deviceId,
-        },
+        metadata: { deviceId, ip: clientIp },
       });
 
       return NextResponse.json(
         {
           valid: false,
-          message: "انتهت صلاحية هذا الترخيص",
+          message: "انتهت صلاحية الترخيص",
         },
         { status: 403 }
       );
     }
 
-    // Check device limit
-    const existingActivations = await Activation.find({
+    // Check for existing activation
+    let activation = await Activation.findOne({
       license: license._id,
-    }).sort({ activatedAt: 1 });
+      deviceId: deviceId,
+    });
 
-    const currentDeviceActivation = existingActivations.find(
-      (a) => a.deviceId === deviceId
-    );
+    if (!activation) {
+      // Check if max devices reached
+      const activeDevices = await Activation.countDocuments({
+        license: license._id,
+      });
 
-    if (!currentDeviceActivation) {
-      // New device trying to activate
-      if (existingActivations.length >= license.allowedDevices) {
-        // Device limit exceeded
+      if (activeDevices >= license.allowedDevices) {
         await EventLog.create({
           license: license._id,
           teacher: license.teacher?._id,
           type: "validation.failed",
-          message: "Device limit exceeded",
+          message: "Max devices reached",
           metadata: {
             deviceId,
-            currentDevices: existingActivations.length,
-            allowedDevices: license.allowedDevices,
+            currentDevices: activeDevices,
+            maxDevices: license.allowedDevices,
+            ip: clientIp,
           },
         });
 
         return NextResponse.json(
           {
             valid: false,
-            message: `هذا الترخيص مفعل بالفعل على ${license.allowedDevices} جهاز. الرجاء إلغاء التفعيل من جهاز آخر أولاً.`,
+            message: `تم الوصول إلى الحد الأقصى للأجهزة المسموح بها (${license.allowedDevices}). الرجاء إلغاء تفعيل أحد الأجهزة الأخرى أو التواصل مع الدعم.`,
+            devicesUsed: activeDevices,
+            maxDevices: license.allowedDevices,
           },
           { status: 403 }
         );
       }
 
       // Create new activation
-      await Activation.create({
+      activation = await Activation.create({
         license: license._id,
-        deviceId,
-        deviceInfo: deviceInfo || {},
+        teacher: license.teacher?._id,
+        deviceId: deviceId,
+        userAgent: deviceInfo?.userAgent,
+        ip: clientIp,
         activatedAt: now,
-        lastValidatedAt: now,
+        lastSeenAt: now,
+        lastIp: clientIp,
+        metadata: deviceInfo,
       });
 
       await EventLog.create({
@@ -152,37 +173,63 @@ export async function POST(req: NextRequest) {
         teacher: license.teacher?._id,
         type: "device.activated",
         message: "New device activated",
-        metadata: { deviceId, deviceInfo },
+        metadata: {
+          deviceId,
+          deviceInfo,
+          ip: clientIp,
+          activationNumber: activeDevices + 1,
+        },
       });
     } else {
-      // Update last seen time for existing device
-      currentDeviceActivation.lastSeenAt = now;
-      await currentDeviceActivation.save();
+      // Update last seen
+      activation.lastSeenAt = now;
+      activation.lastIp = clientIp;
+
+      // Update metadata if provided
+      if (deviceInfo) {
+        activation.metadata = { ...activation.metadata, ...deviceInfo };
+      }
+
+      await activation.save();
+
+      // Log validation success (only once per day per device)
+      const lastLog = await EventLog.findOne({
+        license: license._id,
+        type: "validation.success",
+        "metadata.deviceId": deviceId,
+      }).sort({ createdAt: -1 });
+
+      const shouldLog =
+        !lastLog || differenceInDays(now, lastLog.createdAt) >= 1;
+
+      if (shouldLog) {
+        await EventLog.create({
+          license: license._id,
+          teacher: license.teacher?._id,
+          type: "validation.success",
+          message: "License validated successfully",
+          metadata: { deviceId, ip: clientIp },
+        });
+      }
     }
 
-    // Log successful validation
-    await EventLog.create({
+    // Get current device count
+    const devicesUsed = await Activation.countDocuments({
       license: license._id,
-      teacher: license.teacher?._id,
-      type: "validation.success",
-      message: "License validated successfully",
-      metadata: { deviceId },
     });
 
-    // Calculate remaining days
-    const remainingDays = differenceInDays(validUntil, now);
+    // Calculate days remaining
+    const daysRemaining = license.validUntil
+      ? differenceInDays(license.validUntil, now)
+      : null;
 
-    // Return success response
     return NextResponse.json({
       valid: true,
-      teacher: {
-        fullName: (license.teacher as any)?.fullName || "Unknown",
-        email: (license.teacher as any)?.email || "",
-      },
-      expiresAt: validUntil.toISOString(),
-      remainingDays,
-      deviceCount:
-        existingActivations.length + (currentDeviceActivation ? 0 : 1),
+      message: "الترخيص صالح",
+      teacherName: (license.teacher as any)?.fullName || "مستخدم",
+      expiresAt: license.validUntil?.toISOString(),
+      daysRemaining,
+      devicesUsed,
       maxDevices: license.allowedDevices,
     });
   } catch (error) {
@@ -198,7 +245,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Endpoint to deactivate a device
+// Endpoint to deactivate a device (for future use)
 export async function DELETE(req: NextRequest) {
   await connectToDatabase();
 
@@ -241,7 +288,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Device deactivated successfully",
+      message: "تم إلغاء تفعيل الجهاز بنجاح",
     });
   } catch (error) {
     console.error("Device deactivation error:", error);
