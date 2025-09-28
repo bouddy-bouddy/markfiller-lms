@@ -102,6 +102,7 @@ export type ActivationDocument = {
   activatedAt: Date;
   lastSeenAt?: Date;
   lastIp?: string;
+  metadata?: Record<string, unknown>;
 };
 
 const ActivationSchema = new Schema<ActivationDocument>(
@@ -118,6 +119,7 @@ const ActivationSchema = new Schema<ActivationDocument>(
     activatedAt: { type: Date, default: Date.now },
     lastSeenAt: { type: Date },
     lastIp: { type: String },
+    metadata: { type: Schema.Types.Mixed },
   },
   { timestamps: false }
 );
