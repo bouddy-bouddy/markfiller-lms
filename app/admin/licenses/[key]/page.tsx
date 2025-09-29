@@ -480,10 +480,8 @@ export default function LicenseDetails({
                   <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="الإعدادي">
-                    الإعدادي (Middle School)
-                  </SelectItem>
-                  <SelectItem value="الثانوي">الثانوي (High School)</SelectItem>
+                  <SelectItem value="الإعدادي">الإعدادي</SelectItem>
+                  <SelectItem value="الثانوي">الثانوي</SelectItem>
                 </SelectContent>
               </Select>
             </div>
