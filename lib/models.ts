@@ -61,38 +61,6 @@ const TeacherSchema = new Schema<TeacherDocument>(
 
 export type LicenseStatus = "active" | "suspended" | "expired";
 
-export type LicenseDocument = {
-  _id: mongoose.Types.ObjectId;
-  teacher: mongoose.Types.ObjectId;
-  key: string; // generated
-  allowedDevices: number; // default 1, sometimes 2
-  validUntil: Date; // 10 months from creation
-  status: LicenseStatus;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-const LicenseSchema = new Schema<LicenseDocument>(
-  {
-    teacher: {
-      type: Schema.Types.ObjectId,
-      ref: "Teacher",
-      required: true,
-      index: true,
-    },
-    key: { type: String, required: true, unique: true, index: true },
-    allowedDevices: { type: Number, default: 1, min: 1, max: 2 },
-    validUntil: { type: Date, required: true },
-    status: {
-      type: String,
-      enum: ["active", "suspended", "expired"],
-      default: "active",
-      index: true,
-    },
-  },
-  { timestamps: true }
-);
-
 export type ActivationDocument = {
   _id: mongoose.Types.ObjectId;
   license: mongoose.Types.ObjectId;
@@ -125,23 +93,6 @@ const ActivationSchema = new Schema<ActivationDocument>(
 );
 ActivationSchema.index({ license: 1, deviceId: 1 }, { unique: true });
 
-export type EventLogDocument = {
-  _id: mongoose.Types.ObjectId;
-  license?: mongoose.Types.ObjectId;
-  teacher?: mongoose.Types.ObjectId;
-  type:
-    | "license.created"
-    | "license.suspended"
-    | "license.expired"
-    | "activation.created"
-    | "activation.rejected"
-    | "validation.ok"
-    | "validation.failed";
-  message?: string;
-  metadata?: Record<string, unknown>;
-  createdAt: Date;
-};
-
 const EventLogSchema = new Schema<EventLogDocument>(
   {
     license: { type: Schema.Types.ObjectId, ref: "License" },
@@ -160,9 +111,6 @@ export const AdminUser: Model<AdminUserDocument> =
 
 export const Teacher: Model<TeacherDocument> =
   (models.Teacher as Model<TeacherDocument>) || model("Teacher", TeacherSchema);
-
-export const License: Model<LicenseDocument> =
-  (models.License as Model<LicenseDocument>) || model("License", LicenseSchema);
 
 export const Activation: Model<ActivationDocument> =
   (models.Activation as Model<ActivationDocument>) ||
@@ -190,3 +138,122 @@ const SettingSchema = new Schema<SettingDocument>(
 
 export const Setting: Model<SettingDocument> =
   (models.Setting as Model<SettingDocument>) || model("Setting", SettingSchema);
+
+// NEW: Usage Tracking Schema
+export type UsageDocument = {
+  _id: mongoose.Types.ObjectId;
+  license: mongoose.Types.ObjectId;
+  teacher: mongoose.Types.ObjectId;
+  operationType: "upload" | "download" | "analysis";
+  timestamp: Date;
+  metadata?: {
+    fileName?: string;
+    fileSize?: number;
+    rowCount?: number;
+    ip?: string;
+  };
+};
+
+const UsageSchema = new Schema<UsageDocument>(
+  {
+    license: {
+      type: Schema.Types.ObjectId,
+      ref: "License",
+      required: true,
+      index: true,
+    },
+    teacher: {
+      type: Schema.Types.ObjectId,
+      ref: "Teacher",
+      required: true,
+      index: true,
+    },
+    operationType: {
+      type: String,
+      enum: ["upload", "download", "analysis"],
+      required: true,
+      default: "upload",
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now,
+      index: true,
+    },
+    metadata: {
+      fileName: String,
+      fileSize: Number,
+      rowCount: Number,
+      ip: String,
+    },
+  },
+  { timestamps: false }
+);
+
+// Compound index for efficient queries
+UsageSchema.index({ license: 1, timestamp: -1 });
+UsageSchema.index({ teacher: 1, timestamp: -1 });
+
+export const Usage: Model<UsageDocument> =
+  (models.Usage as Model<UsageDocument>) || model("Usage", UsageSchema);
+
+// Update License Schema to include usage tracking fields
+export type LicenseDocument = {
+  _id: mongoose.Types.ObjectId;
+  teacher: mongoose.Types.ObjectId;
+  key: string;
+  allowedDevices: number;
+  validUntil: Date;
+  status: LicenseStatus;
+  uploadLimit: number; // NEW: Calculated limit
+  uploadCount: number; // NEW: Current usage count
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const LicenseSchema = new Schema<LicenseDocument>(
+  {
+    teacher: {
+      type: Schema.Types.ObjectId,
+      ref: "Teacher",
+      required: true,
+      index: true,
+    },
+    key: { type: String, required: true, unique: true, index: true },
+    allowedDevices: { type: Number, default: 1, min: 1, max: 2 },
+    validUntil: { type: Date, required: true },
+    status: {
+      type: String,
+      enum: ["active", "suspended", "expired"],
+      default: "active",
+      index: true,
+    },
+    uploadLimit: { type: Number, required: true, default: 10 }, // NEW
+    uploadCount: { type: Number, default: 0, index: true }, // NEW
+  },
+  { timestamps: true }
+);
+
+export const License: Model<LicenseDocument> =
+  (models.License as Model<LicenseDocument>) || model("License", LicenseSchema);
+
+// Update EventLog types
+export type EventLogDocument = {
+  _id: mongoose.Types.ObjectId;
+  license?: mongoose.Types.ObjectId;
+  teacher?: mongoose.Types.ObjectId;
+  type:
+    | "license.created"
+    | "license.suspended"
+    | "license.expired"
+    | "license.usage_limit_reached" // NEW
+    | "license.usage_warning" // NEW
+    | "activation.created"
+    | "activation.rejected"
+    | "validation.ok"
+    | "validation.failed"
+    | "upload.success" // NEW
+    | "upload.blocked"; // NEW
+  message?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: Date;
+};
