@@ -14,6 +14,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface LicenseUsage {
   licenseKey: string;
@@ -215,15 +222,19 @@ export default function UsageDashboard() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1"
             />
-            <select
+            <Select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="border rounded px-3 py-2"
+              onValueChange={(value) => setSortBy(value as any)}
             >
-              <option value="usage">Sort by Usage %</option>
-              <option value="remaining">Sort by Remaining</option>
-              <option value="name">Sort by Name</option>
-            </select>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sort by..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="usage">Sort by Usage %</SelectItem>
+                <SelectItem value="remaining">Sort by Remaining</SelectItem>
+                <SelectItem value="name">Sort by Name</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
