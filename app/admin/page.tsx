@@ -15,7 +15,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -40,17 +47,35 @@ export default function AdminHome() {
   const [status, setStatus] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const createSchema = z.object({
     fullName: z.string().min(2),
     email: z.string().email(),
     cin: z.string().min(3),
+    phone: z.string().min(6),
+    level: z.enum(["الإعدادي", "الثانوي"]),
+    subject: z.string().min(2),
+    classesCount: z.number().min(1),
+    testsPerTerm: z.number().min(1),
     allowedDevices: z.number().min(1).max(2).default(1),
+    monthsValid: z.number().min(1).default(10),
   });
   type CreateValues = z.input<typeof createSchema>;
   const form = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
-    defaultValues: { fullName: "", email: "", cin: "", allowedDevices: 1 },
+    defaultValues: {
+      fullName: "",
+      email: "",
+      cin: "",
+      phone: "",
+      level: "الإعدادي",
+      subject: "",
+      classesCount: 1,
+      testsPerTerm: 1,
+      allowedDevices: 1,
+      monthsValid: 10,
+    },
   });
 
   async function loadLicenses() {
@@ -161,118 +186,294 @@ export default function AdminHome() {
         </Card>
       </div>
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Licenses</CardTitle>
+          <Button onClick={() => setCreateOpen(true)}>Create License</Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="border rounded p-4">
-            <div className="font-medium mb-3">Create License</div>
-            <Form {...form}>
-              <form
-                className="grid grid-cols-1 sm:grid-cols-4 gap-3"
-                onSubmit={form.handleSubmit(async (values) => {
-                  setCreating(true);
-                  try {
-                    const res = await fetch("/api/licenses", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      credentials: "include",
-                      body: JSON.stringify(values),
-                    });
-                    if (!res.ok) {
-                      const errorData = await res.json().catch(() => ({}));
-                      throw new Error(
-                        errorData.error ||
-                          `Failed to create license (${res.status})`
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Create License</DialogTitle>
+                <DialogDescription>
+                  Fill in all required fields to create and email the license.
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                  onSubmit={form.handleSubmit(async (values) => {
+                    setCreating(true);
+                    try {
+                      const res = await fetch("/api/licenses", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify(values),
+                      });
+                      if (!res.ok) {
+                        const errorData = await res.json().catch(() => ({}));
+                        throw new Error(
+                          errorData.error ||
+                            `Failed to create license (${res.status})`
+                        );
+                      }
+                      toast.success(
+                        "License created and email sent successfully"
                       );
+                      form.reset({
+                        fullName: "",
+                        email: "",
+                        cin: "",
+                        phone: "",
+                        level: "الإعدادي",
+                        subject: "",
+                        classesCount: 1,
+                        testsPerTerm: 1,
+                        allowedDevices: 1,
+                        monthsValid: 10,
+                      });
+                      setCreateOpen(false);
+                      loadLicenses();
+                    } catch (e) {
+                      toast.error(
+                        (e as Error).message || "Error creating license"
+                      );
+                    } finally {
+                      setCreating(false);
                     }
-                    toast.success(
-                      "License created and email sent successfully"
-                    );
-                    form.reset({
-                      fullName: "",
-                      email: "",
-                      cin: "",
-                      allowedDevices: 1,
-                    });
-                    loadLicenses();
-                  } catch (e) {
-                    toast.error(
-                      (e as Error).message || "Error creating license"
-                    );
-                  } finally {
-                    setCreating(false);
-                  }
-                })}
-              >
-                <FormField
-                  control={form.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Teacher name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="teacher@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="cin"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CIN</FormLabel>
-                      <FormControl>
-                        <Input placeholder="ID Card Number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="allowedDevices"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Allowed devices</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={2}
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="sm:col-span-4">
-                  <Button type="submit" disabled={creating}>
-                    {creating ? "Creating..." : "Create"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </div>
+                  })}
+                >
+                  <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Teacher name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="teacher@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="cin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CIN</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ID Card Number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Phone number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="level"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Level</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select level" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="الإعدادي">الإعدادي</SelectItem>
+                            <SelectItem value="الثانوي">الثانوي</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subject</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select subject" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="الرياضيات">الرياضيات</SelectItem>
+                            <SelectItem value="الفيزياء والكيمياء">
+                              الفيزياء والكيمياء
+                            </SelectItem>
+
+                            <SelectItem value="علوم الحياة والأرض">
+                              علوم الحياة والأرض
+                            </SelectItem>
+                            <SelectItem value="اللغة العربية">
+                              اللغة العربية
+                            </SelectItem>
+                            <SelectItem value="اللغة الفرنسية">
+                              اللغة الفرنسية
+                            </SelectItem>
+                            <SelectItem value="اللغة الإنجليزية">
+                              اللغة الإنجليزية
+                            </SelectItem>
+                            <SelectItem value="التاريخ والجغرافيا">
+                              التاريخ والجغرافيا
+                            </SelectItem>
+                            <SelectItem value="التربية الإسلامية">
+                              التربية الإسلامية
+                            </SelectItem>
+                            <SelectItem value="الفلسفة">الفلسفة</SelectItem>
+                            <SelectItem value="الاقتصاد">الاقتصاد</SelectItem>
+                            <SelectItem value="المحاسبة">المحاسبة</SelectItem>
+                            <SelectItem value="الإعلاميات">
+                              الإعلاميات
+                            </SelectItem>
+                            <SelectItem value="التربية البدنية">
+                              التربية البدنية
+                            </SelectItem>
+                            <SelectItem value="الفنون">الفنون</SelectItem>
+                            <SelectItem value="الموسيقى">الموسيقى</SelectItem>
+                            <SelectItem value="مادة أخرى">مادة أخرى</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="classesCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Classes count</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="testsPerTerm"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tests per term</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="allowedDevices"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Allowed devices</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={2}
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="monthsValid"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Months valid</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="sm:col-span-2 mt-2 flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setCreateOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={creating}>
+                      {creating ? "Creating..." : "Create"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
           <div className="flex flex-wrap gap-2 items-center">
             <Input
               placeholder="Search by key/status/email..."
@@ -357,34 +558,35 @@ export default function AdminHome() {
           </div>
         </CardContent>
       </Card>
-      {pendingDelete && (
-        <Alert
-          variant="destructive"
-          className="flex items-start justify-between gap-4"
-        >
-          <div>
-            <AlertTitle>Delete this license?</AlertTitle>
-            <AlertDescription>
+      <Dialog
+        open={!!pendingDelete}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete this license?</DialogTitle>
+            <DialogDescription>
               This action cannot be undone. This will permanently delete the
               license and associated data.
-            </AlertDescription>
-          </div>
-          <div className="mt-1 flex gap-2">
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingDelete(null)}>
+              Cancel
+            </Button>
             <Button
               variant="destructive"
               onClick={async () => {
+                if (!pendingDelete) return;
                 await remove(pendingDelete);
                 setPendingDelete(null);
               }}
             >
               Delete
             </Button>
-            <Button variant="outline" onClick={() => setPendingDelete(null)}>
-              Cancel
-            </Button>
-          </div>
-        </Alert>
-      )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
