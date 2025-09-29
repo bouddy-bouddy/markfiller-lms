@@ -528,7 +528,7 @@ export default function LicenseDetails({
                   setEditForm({ ...editForm, allowedDevices: parseInt(value) })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -548,7 +548,7 @@ export default function LicenseDetails({
                   })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
