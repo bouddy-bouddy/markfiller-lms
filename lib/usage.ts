@@ -1,5 +1,5 @@
 // lib/usage.ts
-import { License, Teacher, Usage, EventLog } from "./models";
+import { License, Usage, EventLog } from "./models";
 import mongoose from "mongoose";
 
 /**

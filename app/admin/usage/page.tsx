@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,33 +45,7 @@ export default function UsageDashboard() {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<"usage" | "remaining" | "name">("usage");
 
-  useEffect(() => {
-    loadUsageStats();
-  }, []);
-
-  useEffect(() => {
-    filterAndSort();
-  }, [searchQuery, licenses, sortBy]);
-
-  const loadUsageStats = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/admin/usage", {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setLicenses(data.licenses || []);
-        setOverall(data.overall || null);
-      }
-    } catch (error) {
-      console.error("Failed to load usage stats:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterAndSort = () => {
+  const filterAndSort = useCallback(() => {
     let filtered = licenses;
 
     // Filter by search query
@@ -97,6 +71,32 @@ export default function UsageDashboard() {
     });
 
     setFilteredLicenses(filtered);
+  }, [searchQuery, licenses, sortBy]);
+
+  useEffect(() => {
+    loadUsageStats();
+  }, []);
+
+  useEffect(() => {
+    filterAndSort();
+  }, [filterAndSort]);
+
+  const loadUsageStats = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/admin/usage", {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setLicenses(data.licenses || []);
+        setOverall(data.overall || null);
+      }
+    } catch (error) {
+      console.error("Failed to load usage stats:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStatusBadge = (status: string, usagePercentage: number) => {

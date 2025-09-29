@@ -27,7 +27,12 @@ export async function sendMail(to: string, subject: string, html: string) {
   await transporter.sendMail({ from: MAIL_FROM, to, subject, html });
 }
 
-export function licenseEmailTemplate(fullName: string, licenseKey: string) {
+export function licenseEmailTemplate(
+  fullName: string,
+  licenseKey: string,
+  validUntil: string,
+  uploadLimit: number
+) {
   return `
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
@@ -342,7 +347,8 @@ export function licenseEmailTemplate(fullName: string, licenseKey: string) {
         <div class="info-card">
           <div class="info-title">📋 تفاصيل الترخيص</div>
           <ul class="info-list">
-            <li><span class="highlight">مدة الصلاحية:</span> 10 أشهر من تاريخ الإصدار</li>
+            <li><span class="highlight">مدة الصلاحية:</span> ${validUntil}</li>
+            <li><span class="highlight">حد الرفع:</span> ${uploadLimit} ملف</li>
             <li><span class="highlight">الأجهزة المسموحة:</span> جهاز واحد (أو جهازين في حالات خاصة)</li>
             <li><span class="highlight">الأمان:</span> مرتبط بجهاز محدد لمزيد من الحماية</li>
             <li><span class="highlight">الدعم:</span> دعم فني متاح على مدار الساعة</li>
