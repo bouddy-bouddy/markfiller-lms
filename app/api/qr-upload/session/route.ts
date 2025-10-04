@@ -39,9 +39,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Generate upload URL for QR code
-    const uploadUrl = `${
-      process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-    }/upload/${sessionId}`;
+    const uploadUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/upload/${sessionId}`;
 
     return NextResponse.json({
       success: true,
