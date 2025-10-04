@@ -143,7 +143,7 @@ export default function MobileUploadPage() {
                   alt="Preview"
                   width={400}
                   height={256}
-                  className="max-h-64 mx-auto rounded-lg object-contain"
+                  className="max-h-64 mx-auto rounded-lg"
                 />
                 <p className="text-sm text-gray-600">{selectedImage?.name}</p>
                 <Button
@@ -177,9 +177,9 @@ export default function MobileUploadPage() {
             ref={fileInputRef}
             type="file"
             accept="image/jpeg,image/jpg,image/png,image/webp"
-            capture="environment"
             className="hidden"
             onChange={handleImageSelect}
+            aria-label="اختيار صورة لائحة النقط"
           />
 
           {/* Error Message */}
@@ -208,19 +208,6 @@ export default function MobileUploadPage() {
               </>
             )}
           </Button>
-
-          {/* Instructions */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800">
-              <strong>نصائح للحصول على أفضل النتائج:</strong>
-            </p>
-            <ul className="text-sm text-blue-700 mt-2 space-y-1 list-disc list-inside">
-              <li>تأكد من وضوح الصورة وعدم وجود ظلال</li>
-              <li>التقط الصورة من الأعلى مباشرة</li>
-              <li>تأكد من إضاءة جيدة</li>
-              <li>احرص على ظهور كامل اللائحة في الصورة</li>
-            </ul>
-          </div>
         </CardContent>
       </Card>
     </div>
