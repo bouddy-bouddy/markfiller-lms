@@ -11,12 +11,12 @@ export const revalidate = 0;
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   await connectToDatabase();
 
   try {
-    const { sessionId } = params;
+    const { sessionId } = await params;
 
     console.log("📊 Checking status for session:", sessionId);
 
