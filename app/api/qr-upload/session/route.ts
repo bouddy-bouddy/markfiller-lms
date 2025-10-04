@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
-import { QrSession } from "@/lib/models/QrSession";
+import { QrSession } from "@/lib/QrSession";
 import { nanoid } from "nanoid";
 
 export const dynamic = "force-dynamic";

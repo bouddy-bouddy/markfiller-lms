@@ -45,7 +45,6 @@ const QrSessionSchema = new Schema<IQrSession>({
   expiresAt: {
     type: Date,
     required: true,
-    index: true,
   },
   createdAt: {
     type: Date,

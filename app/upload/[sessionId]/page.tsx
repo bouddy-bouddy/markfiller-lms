@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Check, X, Camera, Loader2 } from "lucide-react";
@@ -137,10 +138,12 @@ export default function MobileUploadPage() {
           >
             {previewUrl ? (
               <div className="space-y-4">
-                <img
+                <Image
                   src={previewUrl}
                   alt="Preview"
-                  className="max-h-64 mx-auto rounded-lg"
+                  width={400}
+                  height={256}
+                  className="max-h-64 mx-auto rounded-lg object-contain"
                 />
                 <p className="text-sm text-gray-600">{selectedImage?.name}</p>
                 <Button
