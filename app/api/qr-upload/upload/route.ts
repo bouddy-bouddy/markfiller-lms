@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { QrSession } from "@/lib/QrSession";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
+import { v2 as cloudinary } from "cloudinary";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 /**
  * POST /api/qr-upload/upload
- * Upload image from mobile device
+ * Upload image from mobile device to Cloudinary
  */
 export async function POST(req: NextRequest) {
   await connectToDatabase();
@@ -23,7 +28,10 @@ export async function POST(req: NextRequest) {
     const image = formData.get("image") as File;
 
     console.log("📋 Session ID:", sessionId);
-    console.log("🖼️ Image:", image ? image.name : "No image");
+    console.log(
+      "🖼️ Image:",
+      image ? `${image.name} (${image.size} bytes)` : "No image"
+    );
 
     if (!sessionId || !image) {
       console.error("❌ Missing sessionId or image");
@@ -74,30 +82,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadDir = join(process.cwd(), "public", "uploads", "qr-marksheets");
-    if (!existsSync(uploadDir)) {
-      console.log("📁 Creating upload directory");
-      await mkdir(uploadDir, { recursive: true });
-    }
+    console.log("☁️ Uploading to Cloudinary...");
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const extension = image.name.split(".").pop() || "jpg";
-    const filename = `${sessionId}_${timestamp}.${extension}`;
-    const filepath = join(uploadDir, filename);
-
-    console.log("💾 Saving to:", filepath);
-
-    // Save image to disk
+    // Convert File to Buffer
     const bytes = await image.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filepath, buffer);
 
-    // Generate public URL
-    const imageUrl = `/uploads/qr-marksheets/${filename}`;
+    // Upload to Cloudinary
+    const uploadResult = await new Promise<any>((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: "markfiller/qr-marksheets",
+            public_id: `${sessionId}_${Date.now()}`,
+            resource_type: "image",
+            transformation: [
+              { quality: "auto:good" }, // Optimize quality
+              { fetch_format: "auto" }, // Auto format
+            ],
+          },
+          (error, result) => {
+            if (error) {
+              console.error("❌ Cloudinary upload error:", error);
+              reject(error);
+            } else {
+              console.log("✅ Cloudinary upload success:", result?.secure_url);
+              resolve(result);
+            }
+          }
+        )
+        .end(buffer);
+    });
 
-    console.log("✅ Image saved, URL:", imageUrl);
+    const imageUrl = uploadResult.secure_url;
+
+    console.log("✅ Image uploaded to Cloudinary:", imageUrl);
 
     // Update session
     await QrSession.updateOne(
@@ -124,7 +143,10 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("❌ Error uploading image:", error);
     return NextResponse.json(
-      { error: "Failed to upload image" },
+      {
+        error: "Failed to upload image",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
